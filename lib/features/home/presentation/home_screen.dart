@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/transactions_service.dart';
-import '../../../data/utils/categories.dart';
+import '../../../data/services/points_service.dart';
+import '../../../data/services/airi_advice.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,11 +11,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _svc = TransactionsService();
+  final _points = PointsService();
+  final _advice = AiriAdviceService();
+
+  int _totalPoints = 0;
+  List<String> _tips = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final t = await _points.total();
+    final tips = await _advice.getAdvice();
+    if (!mounted) return;
+    setState(() {
+      _totalPoints = t;
+      _tips = tips;
+    });
+  }
 
   Future<void> _addTx(BuildContext context) async {
     final formKey = GlobalKey<FormState>();
     final amountCtrl = TextEditingController();
-    String category = kCategories.first;
+    String category = 'Еда';
     TxType type = TxType.expense;
 
     await showModalBottomSheet(
@@ -58,8 +80,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 DropdownButtonFormField<String>(
                   value: category,
                   decoration: const InputDecoration(labelText: 'Категория'),
-                  items: kCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (v) => category = v ?? kCategories.first,
+                  items: const [
+                    DropdownMenuItem(value: 'Еда', child: Text('Еда')),
+                    DropdownMenuItem(value: 'Транспорт', child: Text('Транспорт')),
+                    DropdownMenuItem(value: 'Дом', child: Text('Дом')),
+                    DropdownMenuItem(value: 'Развлеч.', child: Text('Развлеч.')),
+                    DropdownMenuItem(value: 'Подписки', child: Text('Подписки')),
+                    DropdownMenuItem(value: 'Другое', child: Text('Другое')),
+                  ],
+                  onChanged: (v) => category = v ?? 'Еда',
                 ),
                 const SizedBox(height: 8),
                 ElevatedButton(
@@ -69,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     await _svc.add(amount: amt, type: type, category: category);
                     if (!mounted) return;
                     Navigator.pop(ctx);
-                    setState(() {});
+                    await _load(); // перезагрузим баллы/советы/баланс
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Сохранено')),
                     );
@@ -97,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListTile(
               leading: const Icon(Icons.account_balance_wallet_outlined),
               title: const Text('Текущий баланс'),
-              subtitle: Text('${balance.toStringAsFixed(2)}'),
+              subtitle: Text(balance.toStringAsFixed(2)),
             ),
           ),
           const SizedBox(height: 12),
@@ -113,6 +142,48 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.military_tech_outlined),
+              title: const Text('Баллы'),
+              subtitle: Text('$_totalPoints'),
+              trailing: IconButton(
+                onPressed: () async {
+                  await _points.addPoints(reason: 'Ежедневный бонус', amount: 5);
+                  await _load();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('+5 баллов (ежедневный бонус)')),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                tooltip: 'Получить +5',
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_tips.isNotEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.person_outline),
+                      title: Text('Airi совет'),
+                      subtitle: Text('Ниже — быстрые рекомендации по твоему бюджету'),
+                    ),
+                    for (final t in _tips.take(3)) ...[
+                      const SizedBox(height: 4),
+                      Text('• $t'),
+                    ],
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

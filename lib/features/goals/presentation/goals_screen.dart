@@ -44,13 +44,25 @@ class _GoalsScreenState extends State<GoalsScreen> {
         ? ((_progress / _goal).clamp(0.0, 1.0) as double)
         : 0.0;
 
+    final bool reached = _goal > 0 && percent >= 1.0;
+    final bool almost = _goal > 0 && percent >= 0.8 && percent < 1.0;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Мои цели')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (_goal == 0)
+          if (_goal == 0) ...[
             const Text('Цель пока не установлена'),
+            const SizedBox(height: 8),
+            const Card(
+              child: ListTile(
+                leading: Icon(Icons.person_outline),
+                title: Text('Airi совет'),
+                subtitle: Text('Поставь первую цель — это мотивирует откладывать и видеть прогресс.'),
+              ),
+            ),
+          ],
           if (_goal > 0)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,6 +77,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text('Прогресс: ${_progress.toStringAsFixed(2)} ₽'),
+                if (almost)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text('Airi: Остался последний рывок — ты почти у цели!'),
+                  ),
+                if (reached)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text('Airi: Поздравляю! Цель достигнута 🎉 Выбираем новую?'),
+                  ),
               ],
             ),
           const SizedBox(height: 24),

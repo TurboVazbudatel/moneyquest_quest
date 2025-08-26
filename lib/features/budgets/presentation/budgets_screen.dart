@@ -59,8 +59,17 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (_limit == 0)
+          if (_limit == 0) ...[
             const Text('Бюджет пока не установлен'),
+            const SizedBox(height: 8),
+            const Card(
+              child: ListTile(
+                leading: Icon(Icons.person_outline),
+                title: Text('Airi совет'),
+                subtitle: Text('Задай лимит — так будет проще сдерживать траты в конце месяца.'),
+              ),
+            ),
+          ],
           if (_limit > 0)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
