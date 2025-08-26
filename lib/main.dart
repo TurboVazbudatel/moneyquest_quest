@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'features/transactions/presentation/transactions_screen.dart';
 import 'features/account/presentation/account_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -42,6 +43,7 @@ class MoneyQuestApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
+        '/transactions': (ctx) => const TransactionsScreen(),
         '/account': (ctx) => const AccountScreen(),
         '/': (ctx) => const _Gate(),
         '/onboarding': (ctx) => const OnboardingScreen(),

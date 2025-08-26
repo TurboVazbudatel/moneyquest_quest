@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/profile_service.dart';
+import '../../transactions/presentation/add_tx_sheet.dart';
+import '../../transactions/presentation/transactions_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,6 +38,13 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => Navigator.pushNamed(context, '/account'),
           ),
+          IconButton(
+            tooltip: 'Транзакции',
+            icon: const Icon(Icons.list_alt),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const TransactionsScreen()),
+            ),
+          ),
         ],
       ),
       body: ListView(
@@ -46,10 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 24,
-                    child: Text('A'),
-                  ),
+                  const CircleAvatar(radius: 24, child: Text('A')),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -72,6 +78,25 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final ok = await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Theme.of(context).cardColor,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            builder: (_) => const AddTxSheet(),
+          );
+          if (ok == true && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Операция сохранена')),
+            );
+          }
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
