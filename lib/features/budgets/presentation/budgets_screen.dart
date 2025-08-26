@@ -39,6 +39,9 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
       _limit = l;
       _spent = s;
     });
+
+    // Проверяем условие ачивки
+    await _svc.checkWeeklyAchievement();
   }
 
   Future<void> _saveBudget() async {
@@ -61,14 +64,6 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
         children: [
           if (_limit == 0) ...[
             const Text('Бюджет пока не установлен'),
-            const SizedBox(height: 8),
-            const Card(
-              child: ListTile(
-                leading: Icon(Icons.person_outline),
-                title: Text('Airi совет'),
-                subtitle: Text('Задай лимит — так будет проще сдерживать траты в конце месяца.'),
-              ),
-            ),
           ],
           if (_limit > 0)
             Column(
