@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/services/profile_service.dart';
 import '../../transactions/presentation/add_tx_sheet.dart';
 import '../../transactions/presentation/transactions_screen.dart';
+import '../../budgets/presentation/budgets_manager_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,6 +46,13 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (_) => const TransactionsScreen()),
             ),
           ),
+          IconButton(
+            tooltip: 'Бюджеты',
+            icon: const Icon(Icons.pie_chart_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const BudgetsManagerScreen()),
+            ),
+          ),
         ],
       ),
       body: ListView(
@@ -75,6 +83,18 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle: const Text('24 часа уложиться в лимит'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.pushNamed(context, '/root', arguments: 7),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.pie_chart_outline),
+              title: const Text('Бюджеты'),
+              subtitle: const Text('Лимиты по категориям с прогрессом'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BudgetsManagerScreen()),
+              ),
             ),
           ),
         ],
