@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Радар «Доход vs Расход», стилизованный под референс:
-/// — толстая внешняя окружность, внутренние кольца, радиальные деления
-/// — мягкое свечение под полигонами
-/// — Доход: 0xFF32D74B (мятно-зелёный), Расход: мягко-красный
+/// Радар «Доход vs Расход»
+/// - без собственного фона (использует стиль экрана/карточки)
+/// - внешнее кольцо + внутренние кольца и лучи
+/// - Доход: 0xFF32D74B, Расход: мягко-красный
 class RadarIncomeExpense extends StatelessWidget {
   final Map<String, double> incomeByCat;
   final Map<String, double> expenseByCat;
@@ -30,18 +30,14 @@ class RadarIncomeExpense extends StatelessWidget {
 
     return AspectRatio(
       aspectRatio: 1,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFF181926), // тёмный фон карточки
-          borderRadius: BorderRadius.circular(16),
-        ),
+      child: Padding(
+        padding: padding,
         child: CustomPaint(
           painter: _RadarPainter(
             axes: axes,
             getIncome: (k) => (incomeByCat[k] ?? 0) / maxVal,
             getExpense: (k) => (expenseByCat[k] ?? 0) / maxVal,
           ),
-          child: Padding(padding: padding, child: const SizedBox.expand()),
         ),
       ),
     );
@@ -59,45 +55,34 @@ class _RadarPainter extends CustomPainter {
     required this.getExpense,
   });
 
-  // Цвета
-  static const incomeMain = Color(0xFF32D74B); // мятно-зелёный (как просили)
-  static const expenseMain = Color(0xFFFF6B6B); // мягко-красный
+  static const incomeMain = Color(0xFF32D74B);     // мягко-мятный зелёный
+  static const expenseMain = Color(0xFFFF6B6B);    // мягко-красный
 
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final R = math.min(cx, cy) * 0.82;
+    final R = math.min(cx, cy) * 0.86;
 
-    // Фоновые концентрические кольца + внешняя толстая окружность
+    // Кольца
     final outer = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
+      ..strokeWidth = 3
       ..color = Colors.white.withValues(alpha: 0.08);
-
-    // Внутренние кольца
     final ring = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
+      ..strokeWidth = 1
       ..color = Colors.white.withValues(alpha: 0.06);
 
-    // Лёгкое радиальное свечение в центре
-    final glow = Paint()
-      ..shader = const RadialGradient(
-        colors: [Color(0x22FFFFFF), Color(0x00000000)],
-        stops: [0.0, 1.0],
-      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: R));
-
-    canvas.drawCircle(Offset(cx, cy), R, glow);
     canvas.drawCircle(Offset(cx, cy), R, outer);
     for (final t in [0.25, 0.5, 0.75]) {
       canvas.drawCircle(Offset(cx, cy), R * t, ring);
     }
 
-    // Радиальные деления
+    // Лучи
     final spoke = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
+      ..strokeWidth = 1
       ..color = Colors.white.withValues(alpha: 0.07);
     for (int i = 0; i < axes.length; i++) {
       final ang = _angle(i, axes.length);
@@ -105,15 +90,15 @@ class _RadarPainter extends CustomPainter {
       canvas.drawLine(Offset(cx, cy), p2, spoke);
     }
 
-    // Полигон дохода/расхода + мягкое свечение
+    // Полигоны
     final incomeFill = Paint()
       ..style = PaintingStyle.fill
       ..color = incomeMain.withValues(alpha: 0.16);
     final incomeStroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
-      ..color = incomeMain.withValues(alpha: 0.9)
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..color = incomeMain.withValues(alpha: 0.9);
 
     final expenseFill = Paint()
       ..style = PaintingStyle.fill
@@ -121,14 +106,13 @@ class _RadarPainter extends CustomPainter {
     final expenseStroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
-      ..color = expenseMain.withValues(alpha: 0.9)
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..color = expenseMain.withValues(alpha: 0.9);
 
     final incomePath = Path();
     final expensePath = Path();
     for (int i = 0; i < axes.length; i++) {
       final ang = _angle(i, axes.length);
-
       final ri = (getIncome(axes[i]).clamp(0.0, 1.0)) * R;
       final re = (getExpense(axes[i]).clamp(0.0, 1.0)) * R;
 
@@ -146,10 +130,10 @@ class _RadarPainter extends CustomPainter {
     incomePath.close();
     expensePath.close();
 
-    // Мягкая тень под полигонами
+    // Мягкая тень под полигонами (без save/restore)
     final softShadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.20)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      ..color = Colors.black.withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
     canvas.drawPath(expensePath, softShadow);
     canvas.drawPath(incomePath, softShadow);
 
@@ -158,27 +142,20 @@ class _RadarPainter extends CustomPainter {
     canvas.drawPath(incomePath, incomeFill);
     canvas.drawPath(incomePath, incomeStroke);
 
-    // Подписи осей (минимальные, по стилю — без яркого акцента)
+    // Подписи осей (без canvas.save/restore)
     final tp = TextPainter(textDirection: TextDirection.ltr, maxLines: 1);
     for (int i = 0; i < axes.length; i++) {
       final ang = _angle(i, axes.length);
-      final rr = R * 1.06;
+      final rr = R * 1.05;
       final p = Offset(cx + rr * math.cos(ang), cy + rr * math.sin(ang));
       tp.text = TextSpan(
         text: axes[i],
         style: const TextStyle(fontSize: 11, color: Color(0x99FFFFFF)),
       );
       tp.layout();
-      tp.paint(paintCanvas(canvas, tp, p), Offset.zero);
+      final off = Offset(p.dx - tp.width / 2, p.dy - tp.height / 2);
+      tp.paint(canvas, off);
     }
-  }
-
-  // Центрируем подпись вокруг точки p
-  Canvas paintCanvas(Canvas canvas, TextPainter tp, Offset p) {
-    final off = Offset(p.dx - tp.width / 2, p.dy - tp.height / 2);
-    canvas.save();
-    canvas.translate(off.dx, off.dy);
-    return canvas;
   }
 
   double _angle(int i, int n) => -math.pi / 2 + 2 * math.pi * (i / n);
