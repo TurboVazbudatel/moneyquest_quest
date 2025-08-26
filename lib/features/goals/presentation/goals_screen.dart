@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/goals_service.dart';
+import '../../../data/services/achievements_service.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -10,6 +11,7 @@ class GoalsScreen extends StatefulWidget {
 
 class _GoalsScreenState extends State<GoalsScreen> {
   final _svc = GoalsService();
+  final _ach = AchievementsService();
   double _goal = 0;
   double _progress = 0;
   final _ctrl = TextEditingController();
@@ -27,6 +29,11 @@ class _GoalsScreenState extends State<GoalsScreen> {
       _goal = g;
       _progress = p;
     });
+
+    // Проверим достижение
+    if (_goal > 0 && _progress >= _goal) {
+      await _ach.unlock('goal_reached');
+    }
   }
 
   Future<void> _saveGoal() async {
@@ -54,14 +61,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
         children: [
           if (_goal == 0) ...[
             const Text('Цель пока не установлена'),
-            const SizedBox(height: 8),
-            const Card(
-              child: ListTile(
-                leading: Icon(Icons.person_outline),
-                title: Text('Airi совет'),
-                subtitle: Text('Поставь первую цель — это мотивирует откладывать и видеть прогресс.'),
-              ),
-            ),
           ],
           if (_goal > 0)
             Column(
@@ -85,7 +84,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 if (reached)
                   const Padding(
                     padding: EdgeInsets.only(top: 8),
-                    child: Text('Airi: Поздравляю! Цель достигнута 🎉 Выбираем новую?'),
+                    child: Text('Airi: Поздравляю! Цель достигнута 🎉 Достижение разблокировано!'),
                   ),
               ],
             ),

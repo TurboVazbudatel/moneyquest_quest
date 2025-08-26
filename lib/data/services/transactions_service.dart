@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../storage/hive_store.dart';
+import 'achievements_service.dart';
 
 enum TxType { income, expense }
 
@@ -21,6 +22,10 @@ class TransactionsService {
       'ts': now.millisecondsSinceEpoch,
       'note': note ?? '',
     });
+
+    // === Автоматическая ачивка: Первая транзакция
+    final ach = AchievementsService();
+    await ach.unlock('first_tx');
   }
 
   List<Map> all({DateTime? from, DateTime? to}) {
@@ -46,7 +51,6 @@ class TransactionsService {
     return res;
   }
 
-  /// Баланс = сумма доходов - сумма расходов
   double currentBalance() {
     double inc = 0, exp = 0;
     for (final e in _box.values.whereType<Map>()) {
@@ -56,7 +60,6 @@ class TransactionsService {
     return inc - exp;
   }
 
-  /// Ряд для графика "ФинЗдоровье": накопительный баланс по дням
   List<(DateTime,double)> cumulativeByDay({int days = 8}) {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day).subtract(Duration(days: days-1));
