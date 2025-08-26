@@ -1,16 +1,22 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../data/services/transactions_service.dart';
+import '../../../data/utils/categories.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final categories = ['Еда', 'Транспорт', 'Дом', 'Развлеч.', 'Подписки', 'Другое'];
+    final svc = TransactionsService();
+    final incMap = svc.totalsByCategory(income: true);
+    final expMap = svc.totalsByCategory(income: false);
 
-    // Примерные данные (замени на реальные из хранилища)
-    final incomes  = [40.0, 25.0, 20.0, 15.0, 10.0, 12.0];
-    final expenses = [28.0, 18.0, 26.0, 22.0, 14.0, 16.0];
+    List<double> valuesFor(List<String> cats, Map<String,double> m) =>
+      cats.map((c) => (m[c] ?? 0).toDouble()).toList();
+
+    final incomes  = valuesFor(kCategories, incMap);
+    final expenses = valuesFor(kCategories, expMap);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -29,23 +35,19 @@ class ReportsScreen extends StatelessWidget {
                   tickBorderData: const BorderSide(color: Color(0x33838B9C)),
                   gridBorderData: const BorderSide(color: Color(0x33838B9C)),
                   titleTextStyle: const TextStyle(color: Colors.white70, fontSize: 12),
-                  getTitle: (index, angle) => RadarChartTitle(text: categories[index]),
+                  getTitle: (i, _) => RadarChartTitle(text: kCategories[i]),
                   dataSets: [
-                    // ДОХОД — мягко-зелёный
                     RadarDataSet(
                       dataEntries: incomes.map((v) => RadarEntry(value: v)).toList(),
                       fillColor: const Color(0xFF34D399).withOpacity(0.45),
                       borderColor: const Color(0xFF34D399),
-                      entryRadius: 2,
-                      borderWidth: 2,
+                      entryRadius: 2, borderWidth: 2,
                     ),
-                    // РАСХОД — мягко-красный
                     RadarDataSet(
                       dataEntries: expenses.map((v) => RadarEntry(value: v)).toList(),
                       fillColor: const Color(0xFFF87171).withOpacity(0.45),
                       borderColor: const Color(0xFFF87171),
-                      entryRadius: 2,
-                      borderWidth: 2,
+                      entryRadius: 2, borderWidth: 2,
                     ),
                   ],
                 ),
@@ -54,10 +56,7 @@ class ReportsScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          'Подсказка Airi: сравни форму полигонов — там, где красный “выше” зелёного, категория трат доминирует.',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text('Подсказка Airi: там, где красный “выше” зелёного — траты доминируют.', style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
