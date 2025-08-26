@@ -7,6 +7,7 @@ import 'features/goals/presentation/goals_screen.dart';
 import 'features/budgets/presentation/budgets_screen.dart';
 import 'features/points/presentation/points_screen.dart';
 import 'features/achievements/presentation/achievements_screen.dart';
+import 'features/battle/presentation/budget_battle_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +55,7 @@ class _RootNavState extends State<_RootNav> {
     BudgetsScreen(),
     PointsScreen(),
     AchievementsScreen(),
+    BudgetBattleScreen(),
   ];
 
   @override
@@ -72,6 +74,7 @@ class _RootNavState extends State<_RootNav> {
           NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Бюджеты'),
           NavigationDestination(icon: Icon(Icons.emoji_events_outlined), selectedIcon: Icon(Icons.emoji_events), label: 'Баллы'),
           NavigationDestination(icon: Icon(Icons.star_outline), selectedIcon: Icon(Icons.star), label: 'Достижения'),
+          NavigationDestination(icon: Icon(Icons.sports_esports_outlined), selectedIcon: Icon(Icons.sports_esports), label: 'Челлендж'),
         ],
       ),
     );
