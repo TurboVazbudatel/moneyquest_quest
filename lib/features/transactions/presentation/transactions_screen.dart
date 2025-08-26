@@ -15,10 +15,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   List<Map<String, dynamic>> _items = [];
   List<Map<String, dynamic>> _visible = [];
 
-  // фильтры
+  // фильтры/поиск
   String _query = '';
   TxType? _typeFilter; // null = все, income/expense
   String? _categoryFilter;
+
+  // сводка (по _visible)
+  double _sumIncome = 0;
+  double _sumExpense = 0;
 
   bool _searchMode = false;
   final _searchCtrl = TextEditingController();
@@ -35,13 +39,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   void _applyFilters() {
     var list = List<Map<String, dynamic>>.from(_items);
 
-    // фильтр по типу
+    // тип
     if (_typeFilter != null) {
       final needIncome = _typeFilter == TxType.income;
       list = list.where((e) => (e['type'] == 'income') == needIncome).toList();
     }
 
-    // фильтр по категории (точное совпадение)
+    // категория (точное совпадение)
     if (_categoryFilter != null && _categoryFilter!.isNotEmpty) {
       list = list.where((e) => (e['category'] as String?) == _categoryFilter).toList();
     }
@@ -57,7 +61,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       }).toList();
     }
 
-    setState(() => _visible = list);
+    // сводка по видимым
+    double inc = 0, exp = 0;
+    for (final e in list) {
+      final a = (e['amount'] as num).toDouble();
+      if (e['type'] == 'income') inc += a; else exp += a;
+    }
+
+    setState(() {
+      _visible = list;
+      _sumIncome = inc;
+      _sumExpense = exp;
+    });
   }
 
   Future<void> _add() async {
@@ -122,6 +137,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final categories = {
       for (final e in _items) (e['category'] as String?) ?? 'Другое'
     }.toList();
+
+    final balance = _sumIncome - _sumExpense;
+    final balColor = balance >= 0 ? const Color(0xFF32D74B) : const Color(0xFFFF453A);
 
     return Scaffold(
       appBar: AppBar(
@@ -223,6 +241,43 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ],
             ),
           ),
+
+          // === сводка по видимым ===
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    _SummaryPill(
+                      label: 'Доход',
+                      value: _sumIncome,
+                      color: const Color(0xFF32D74B),
+                    ),
+                    const SizedBox(width: 12),
+                    _SummaryPill(
+                      label: 'Расход',
+                      value: _sumExpense,
+                      color: const Color(0xFFFF453A),
+                    ),
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Баланс'),
+                        Text(
+                          '${balance >= 0 ? '+' : ''}${balance.toStringAsFixed(2)} ₽',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: balColor),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           const Divider(height: 0),
           Expanded(
             child: RefreshIndicator(
@@ -241,9 +296,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     child: ListTile(
                       onTap: () => _edit(e),
                       leading: CircleAvatar(
-                        backgroundColor: (isInc ? Colors.green : Colors.red).withOpacity(0.15),
-                        child: Icon(isInc ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: isInc ? Colors.green : Colors.red),
+                        // миграция с withOpacity -> withValues(alpha: ...)
+                        backgroundColor: (isInc ? Colors.green : Colors.red).withValues(alpha: 0.15),
+                        child: Icon(
+                          isInc ? Icons.arrow_downward : Icons.arrow_upward,
+                          color: isInc ? Colors.green : Colors.red,
+                        ),
                       ),
                       title: Text('${isInc ? '+' : '-'} ${(e['amount'] as num).toStringAsFixed(2)} ₽'),
                       subtitle: Text('${e['category']} • ${dt.day}.${dt.month}.${dt.year}'
@@ -263,6 +321,34 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 },
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryPill extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+  const _SummaryPill({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label),
+          Text(
+            '${value.toStringAsFixed(2)} ₽',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color),
           ),
         ],
       ),
