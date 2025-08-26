@@ -62,7 +62,6 @@ class BudgetsService {
       final v = box.get(k);
       if (v is Map) out.add(Budget.fromMap(k, v));
     }
-    // Последние сверху
     out.sort((a, b) => b.createdMs.compareTo(a.createdMs));
     return out;
   }
@@ -89,6 +88,18 @@ class BudgetsService {
     if (box.containsKey(key)) await box.delete(key);
   }
 
+  /// Найти бюджет по категории (первый подходящий) или null
+  Future<Budget?> findByCategory(String category) async {
+    final box = await _box();
+    for (final k in box.keys) {
+      final v = box.get(k);
+      if (v is Map && (v['category'] as String?) == category) {
+        return Budget.fromMap(k, v);
+      }
+    }
+    return null;
+  }
+
   /// Периодические границы для текущего периода
   (DateTime start, DateTime end) _periodRange(String period) {
     final now = DateTime.now();
@@ -97,7 +108,6 @@ class BudgetsService {
       final end = start.add(const Duration(days: 7));
       return (start, end);
     }
-    // month (по умолчанию)
     final start = DateTime(now.year, now.month, 1);
     final nextMonth = (now.month == 12) ? DateTime(now.year + 1, 1, 1) : DateTime(now.year, now.month + 1, 1);
     return (start, nextMonth);
@@ -126,11 +136,8 @@ class BudgetsService {
     return spent / b.limit;
   }
 
-  /// --- Метрики из предыдущего шага (оставлены для совместимости) ---
-  Future<List<(DateTime, double)>> cumulativeTrend() async {
-    final items = await _tx.cumulativeByDay();
-    return items;
-  }
+  /// --- Метрики (для совместимости/других экранов) ---
+  Future<List<(DateTime, double)>> cumulativeTrend() async => await _tx.cumulativeByDay();
 
   Future<double> totalExpense() async {
     final all = await _tx.all();

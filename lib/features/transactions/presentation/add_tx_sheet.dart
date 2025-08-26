@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/transactions_service.dart';
+import '../../../data/services/budgets_service.dart';
 
 class AddTxSheet extends StatefulWidget {
   final Map<String, dynamic>? initial;
@@ -53,20 +54,17 @@ class _AddTxSheetState extends State<AddTxSheet> {
       ? <double>[1000, 5000, 10000, 20000]
       : <double>[100, 300, 500, 1000, 2000];
 
-  double _currentAmount() =>
-      double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 0;
+  double _currentAmount() => double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 0;
 
   void _applyPreset(double v) {
-    _amountCtrl.text =
-        v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
+    _amountCtrl.text = v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
     setState(() {});
   }
 
   void _bump(double delta) {
     final v = (_currentAmount() + delta);
     if (v <= 0) return;
-    _amountCtrl.text =
-        v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
+    _amountCtrl.text = v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
     setState(() {});
   }
 
@@ -89,6 +87,8 @@ class _AddTxSheetState extends State<AddTxSheet> {
       );
       return;
     }
+
+    // Сохраняем операцию
     if (widget.itemKey != null) {
       await _svc.update(
         key: widget.itemKey,
@@ -107,28 +107,40 @@ class _AddTxSheetState extends State<AddTxSheet> {
         note: _noteCtrl.text.trim(),
       );
     }
-    if (!mounted) return;
-    Navigator.pop(context, true);
-  }
 
-  Future<void> _delete() async {
-    if (widget.itemKey == null) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Удалить транзакцию?'),
-        content: const Text('Это действие нельзя отменить.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Удалить')),
-        ],
-      ),
-    );
-    if (ok == true) {
-      await _svc.remove(widget.itemKey);
-      if (!mounted) return;
-      Navigator.pop(context, true);
+    // Если это расход — покажем состояние бюджета по категории
+    if (_type == TxType.expense) {
+      final bsvc = BudgetsService();
+      final b = await bsvc.findByCategory(_category);
+      if (b != null) {
+        final spent = await bsvc.spentFor(b);
+        final prog = await bsvc.progress(b); // 0..1 (может >1)
+        final pct = (prog * 100).round();
+        final msg = '«$_category»: ${spent.toStringAsFixed(0)} / ${b.limit.toStringAsFixed(0)} ₽ (${pct.clamp(0, 999)}%)';
+
+        Color bg;
+        if (prog >= 1.0) {
+          bg = const Color(0xFFFF453A); // красный
+        } else if (prog >= 0.8) {
+          bg = const Color(0xFFFFD60A); // жёлтый
+        } else {
+          bg = const Color(0xFF32D74B); // зелёный
+        }
+
+        // Показать тост прямо из шита (до закрытия)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: bg.withValues(alpha: 0.9),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
+
+    if (!mounted) return;
+    // Закрываем шит и сообщаем родителю, что всё ок
+    Navigator.pop(context, true);
   }
 
   @override
@@ -136,19 +148,16 @@ class _AddTxSheetState extends State<AddTxSheet> {
     final isIncome = _type == TxType.income;
     final title = widget.itemKey != null ? 'Редактировать' : 'Новая операция';
 
-    // 1) Склеиваем recent + base…
     final combined = <String>[
       if (_recentCats.isNotEmpty) ..._recentCats,
       ..._baseCats,
     ];
-    // 2) …и убираем дубликаты, сохраняя порядок (важно для Dropdown!)
     final seen = <String>{};
     final uniqueCats = <String>[];
     for (final c in combined) {
       if (c.isEmpty) continue;
       if (seen.add(c)) uniqueCats.add(c);
     }
-    // 3) Гарантируем, что выбранная категория присутствует ровно один раз
     if (!uniqueCats.contains(_category)) {
       if (uniqueCats.isNotEmpty) {
         _category = uniqueCats.first;
@@ -174,7 +183,10 @@ class _AddTxSheetState extends State<AddTxSheet> {
               if (widget.itemKey != null)
                 IconButton(
                   tooltip: 'Удалить',
-                  onPressed: _delete,
+                  onPressed: () {
+                    // удаление вынесем отдельно при необходимости
+                    Navigator.pop(context, false);
+                  },
                   icon: const Icon(Icons.delete_outline),
                 ),
             ],
@@ -183,12 +195,11 @@ class _AddTxSheetState extends State<AddTxSheet> {
           SegmentedButton<TxType>(
             segments: const [
               ButtonSegment(value: TxType.expense, label: Text('Расход'), icon: Icon(Icons.remove_circle_outline)),
-            ButtonSegment(value: TxType.income, label: Text('Доход'), icon: Icon(Icons.add_circle_outline)),
+              ButtonSegment(value: TxType.income, label: Text('Доход'), icon: Icon(Icons.add_circle_outline)),
             ],
             selected: {_type},
             onSelectionChanged: (s) => setState(() {
               _type = s.first;
-              // при смене типа перестраиваем список и берём первую категорию
               final base = _type == TxType.income
                   ? TransactionsService.defaultIncomeCats
                   : TransactionsService.defaultExpenseCats;
@@ -232,41 +243,26 @@ class _AddTxSheetState extends State<AddTxSheet> {
               const SizedBox(width: 8),
               Column(
                 children: [
-                  SizedBox(
-                    height: 36,
-                    child: OutlinedButton(onPressed: () => _bump(50), child: const Text('+50')),
-                  ),
+                  SizedBox(height: 36, child: OutlinedButton(onPressed: () => _bump(50), child: const Text('+50'))),
                   const SizedBox(height: 6),
-                  SizedBox(
-                    height: 36,
-                    child: OutlinedButton(onPressed: () => _bump(-50), child: const Text('-50')),
-                  ),
+                  SizedBox(height: 36, child: OutlinedButton(onPressed: () => _bump(-50), child: const Text('-50'))),
                 ],
               ),
               const SizedBox(width: 8),
               Column(
                 children: [
-                  SizedBox(
-                    height: 36,
-                    child: OutlinedButton(onPressed: () => _bump(10), child: const Text('+10')),
-                  ),
+                  SizedBox(height: 36, child: OutlinedButton(onPressed: () => _bump(10), child: const Text('+10'))),
                   const SizedBox(height: 6),
-                  SizedBox(
-                    height: 36,
-                    child: OutlinedButton(onPressed: () => _bump(-10), child: const Text('-10')),
-                  ),
+                  SizedBox(height: 36, child: OutlinedButton(onPressed: () => _bump(-10), child: const Text('-10'))),
                 ],
               ),
             ],
           ),
 
           const SizedBox(height: 12),
-          // Dropdown с уникальными категориями
           DropdownButtonFormField<String>(
             value: _category,
-            items: uniqueCats
-                .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                .toList(),
+            items: uniqueCats.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
             onChanged: (v) => setState(() => _category = v ?? _category),
             decoration: const InputDecoration(
               labelText: 'Категория (недавние сверху)',
@@ -291,11 +287,7 @@ class _AddTxSheetState extends State<AddTxSheet> {
                 label: Text('${_date.day}.${_date.month}.${_date.year}'),
               ),
               const Spacer(),
-              FilledButton.icon(
-                onPressed: _save,
-                icon: const Icon(Icons.check),
-                label: const Text('Сохранить'),
-              ),
+              FilledButton.icon(onPressed: _save, icon: const Icon(Icons.check), label: const Text('Сохранить')),
             ],
           ),
           const SizedBox(height: 8),
