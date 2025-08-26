@@ -1,5 +1,4 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../storage/hive_store.dart';
 
 class GoalsService {
   static const _boxName = 'goals_box';

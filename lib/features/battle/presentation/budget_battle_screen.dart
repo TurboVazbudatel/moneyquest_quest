@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../data/services/challenges_service.dart';
-import '../../../data/services/transactions_service.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../share/widgets/share_card.dart';
 
@@ -14,7 +13,6 @@ class BudgetBattleScreen extends StatefulWidget {
 
 class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
   final _svc = ChallengesService();
-  final _tx = TransactionsService();
 
   final _ctrl = TextEditingController(text: '500');
   Timer? _timer;
@@ -81,14 +79,16 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
     await _refresh();
   }
 
+  // ✅ SharePlus: текст
   Future<void> _shareText() async {
     final ok = _status == BattleStatus.finishedWin;
     final text = ok
         ? 'Я прошёл BudgetBattle! 🏆 Уложился в лимит ${_limit.toStringAsFixed(0)} ₽ за 24 часа. #MoneyQuest'
         : 'Я участвовал в BudgetBattle. В следующий раз точно уложусь! #MoneyQuest';
-    await Share.share(text);
+    await SharePlus.instance.share(text); // <-- корректная сигнатура
   }
 
+  // ✅ SharePlus: открытка (PNG)
   Future<void> _shareCard() async {
     final win = _status == BattleStatus.finishedWin;
     final bullets = <String>[
@@ -116,7 +116,7 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
 
     try {
       final path = await _renderer.renderToPngFile(pixelRatio: 2.5);
-      await Share.shareXFiles([XFile(path)], text: 'Моя открытка BudgetBattle #MoneyQuest');
+      await SharePlus.instance.share('Моя открытка BudgetBattle #MoneyQuest', files: [XFile(path)]);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Не удалось создать открытку: $e')));
@@ -219,14 +219,6 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
-          const Card(
-            child: ListTile(
-              leading: Icon(Icons.person_outline),
-              title: Text('Совет Airi'),
-              subtitle: Text('Планируй покупки заранее — импульсивные траты чаще всего рушат челлендж.'),
-            ),
-          ),
         ],
       ),
     );

@@ -41,7 +41,6 @@ class BudgetsService {
 
     // Берём траты за 7 последних дней
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
     final days = _tx.cumulativeByDay(days: 7);
 
     // считаем дневные траты
