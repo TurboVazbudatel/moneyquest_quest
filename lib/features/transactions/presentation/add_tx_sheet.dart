@@ -19,6 +19,7 @@ class _AddTxSheetState extends State<AddTxSheet> {
   final _noteCtrl = TextEditingController();
   late String _category;
   DateTime _date = DateTime.now();
+  List<String> _recentCats = [];
 
   @override
   void initState() {
@@ -35,11 +36,16 @@ class _AddTxSheetState extends State<AddTxSheet> {
       _type = TxType.expense;
       _category = TransactionsService.defaultExpenseCats.first;
     }
-    final cats = _cats;
-    if (!cats.contains(_category)) cats.add(_category);
+    _loadRecent();
   }
 
-  List<String> get _cats => _type == TxType.income
+  Future<void> _loadRecent() async {
+    final rec = await _svc.recentCategories(top: 3);
+    if (!mounted) return;
+    setState(() => _recentCats = rec);
+  }
+
+  List<String> get _baseCats => _type == TxType.income
       ? List.of(TransactionsService.defaultIncomeCats)
       : List.of(TransactionsService.defaultExpenseCats);
 
@@ -129,8 +135,27 @@ class _AddTxSheetState extends State<AddTxSheet> {
   Widget build(BuildContext context) {
     final isIncome = _type == TxType.income;
     final title = widget.itemKey != null ? 'Редактировать' : 'Новая операция';
-    final cats = _cats;
-    if (!cats.contains(_category)) cats.add(_category);
+
+    // 1) Склеиваем recent + base…
+    final combined = <String>[
+      if (_recentCats.isNotEmpty) ..._recentCats,
+      ..._baseCats,
+    ];
+    // 2) …и убираем дубликаты, сохраняя порядок (важно для Dropdown!)
+    final seen = <String>{};
+    final uniqueCats = <String>[];
+    for (final c in combined) {
+      if (c.isEmpty) continue;
+      if (seen.add(c)) uniqueCats.add(c);
+    }
+    // 3) Гарантируем, что выбранная категория присутствует ровно один раз
+    if (!uniqueCats.contains(_category)) {
+      if (uniqueCats.isNotEmpty) {
+        _category = uniqueCats.first;
+      } else {
+        uniqueCats.add(_category);
+      }
+    }
 
     return Padding(
       padding: EdgeInsets.only(
@@ -158,12 +183,16 @@ class _AddTxSheetState extends State<AddTxSheet> {
           SegmentedButton<TxType>(
             segments: const [
               ButtonSegment(value: TxType.expense, label: Text('Расход'), icon: Icon(Icons.remove_circle_outline)),
-              ButtonSegment(value: TxType.income, label: Text('Доход'), icon: Icon(Icons.add_circle_outline)),
+            ButtonSegment(value: TxType.income, label: Text('Доход'), icon: Icon(Icons.add_circle_outline)),
             ],
             selected: {_type},
             onSelectionChanged: (s) => setState(() {
               _type = s.first;
-              _category = _cats.first;
+              // при смене типа перестраиваем список и берём первую категорию
+              final base = _type == TxType.income
+                  ? TransactionsService.defaultIncomeCats
+                  : TransactionsService.defaultExpenseCats;
+              _category = base.first;
             }),
           ),
           const SizedBox(height: 12),
@@ -205,18 +234,12 @@ class _AddTxSheetState extends State<AddTxSheet> {
                 children: [
                   SizedBox(
                     height: 36,
-                    child: OutlinedButton(
-                      onPressed: () => _bump(50),
-                      child: const Text('+50'),
-                    ),
+                    child: OutlinedButton(onPressed: () => _bump(50), child: const Text('+50')),
                   ),
                   const SizedBox(height: 6),
                   SizedBox(
                     height: 36,
-                    child: OutlinedButton(
-                      onPressed: () => _bump(-50),
-                      child: const Text('-50'),
-                    ),
+                    child: OutlinedButton(onPressed: () => _bump(-50), child: const Text('-50')),
                   ),
                 ],
               ),
@@ -225,18 +248,12 @@ class _AddTxSheetState extends State<AddTxSheet> {
                 children: [
                   SizedBox(
                     height: 36,
-                    child: OutlinedButton(
-                      onPressed: () => _bump(10),
-                      child: const Text('+10'),
-                    ),
+                    child: OutlinedButton(onPressed: () => _bump(10), child: const Text('+10')),
                   ),
                   const SizedBox(height: 6),
                   SizedBox(
                     height: 36,
-                    child: OutlinedButton(
-                      onPressed: () => _bump(-10),
-                      child: const Text('-10'),
-                    ),
+                    child: OutlinedButton(onPressed: () => _bump(-10), child: const Text('-10')),
                   ),
                 ],
               ),
@@ -244,16 +261,20 @@ class _AddTxSheetState extends State<AddTxSheet> {
           ),
 
           const SizedBox(height: 12),
+          // Dropdown с уникальными категориями
           DropdownButtonFormField<String>(
             value: _category,
-            items: cats.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+            items: uniqueCats
+                .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                .toList(),
             onChanged: (v) => setState(() => _category = v ?? _category),
             decoration: const InputDecoration(
-              labelText: 'Категория',
+              labelText: 'Категория (недавние сверху)',
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
+
           TextField(
             controller: _noteCtrl,
             decoration: const InputDecoration(
