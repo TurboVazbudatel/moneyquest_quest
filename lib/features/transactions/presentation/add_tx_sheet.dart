@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/transactions_service.dart';
 import '../../../data/services/budgets_service.dart';
+import '../../budgets/presentation/budgets_manager_screen.dart';
 
 class AddTxSheet extends StatefulWidget {
   final Map<String, dynamic>? initial;
@@ -108,38 +109,47 @@ class _AddTxSheetState extends State<AddTxSheet> {
       );
     }
 
-    // Если это расход — покажем состояние бюджета по категории
+    // Если это расход — проверим бюджет
     if (_type == TxType.expense) {
       final bsvc = BudgetsService();
       final b = await bsvc.findByCategory(_category);
       if (b != null) {
         final spent = await bsvc.spentFor(b);
-        final prog = await bsvc.progress(b); // 0..1 (может >1)
+        final prog = await bsvc.progress(b);
         final pct = (prog * 100).round();
         final msg = '«$_category»: ${spent.toStringAsFixed(0)} / ${b.limit.toStringAsFixed(0)} ₽ (${pct.clamp(0, 999)}%)';
 
         Color bg;
         if (prog >= 1.0) {
-          bg = const Color(0xFFFF453A); // красный
+          bg = const Color(0xFFFF453A);
         } else if (prog >= 0.8) {
-          bg = const Color(0xFFFFD60A); // жёлтый
+          bg = const Color(0xFFFFD60A);
         } else {
-          bg = const Color(0xFF32D74B); // зелёный
+          bg = const Color(0xFF32D74B);
         }
 
-        // Показать тост прямо из шита (до закрытия)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(msg),
             backgroundColor: bg.withValues(alpha: 0.9),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
+            action: (prog >= 0.8)
+                ? SnackBarAction(
+                    label: 'Открыть бюджеты',
+                    textColor: Colors.black,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const BudgetsManagerScreen()),
+                      );
+                    },
+                  )
+                : null,
           ),
         );
       }
     }
 
     if (!mounted) return;
-    // Закрываем шит и сообщаем родителю, что всё ок
     Navigator.pop(context, true);
   }
 
@@ -184,7 +194,6 @@ class _AddTxSheetState extends State<AddTxSheet> {
                 IconButton(
                   tooltip: 'Удалить',
                   onPressed: () {
-                    // удаление вынесем отдельно при необходимости
                     Navigator.pop(context, false);
                   },
                   icon: const Icon(Icons.delete_outline),
