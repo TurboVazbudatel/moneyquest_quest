@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../data/services/challenges_service.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../share/widgets/share_card.dart';
+import '../../../data/services/challenges_service.dart';
 
 class BudgetBattleScreen extends StatefulWidget {
   const BudgetBattleScreen({super.key});
@@ -79,16 +79,16 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
     await _refresh();
   }
 
-  // ✅ SharePlus: текст
+  /// Поделиться текстом (SharePlus + ShareParams)
   Future<void> _shareText() async {
     final ok = _status == BattleStatus.finishedWin;
     final text = ok
         ? 'Я прошёл BudgetBattle! 🏆 Уложился в лимит ${_limit.toStringAsFixed(0)} ₽ за 24 часа. #MoneyQuest'
         : 'Я участвовал в BudgetBattle. В следующий раз точно уложусь! #MoneyQuest';
-    await SharePlus.instance.share(text); // <-- корректная сигнатура
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 
-  // ✅ SharePlus: открытка (PNG)
+  /// Поделиться открыткой PNG
   Future<void> _shareCard() async {
     final win = _status == BattleStatus.finishedWin;
     final bullets = <String>[
@@ -105,6 +105,7 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
       footer: 'MoneyQuest • Airi',
     );
 
+    // превью (и обёртка для RepaintBoundary)
     await showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -116,10 +117,17 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
 
     try {
       final path = await _renderer.renderToPngFile(pixelRatio: 2.5);
-      await SharePlus.instance.share('Моя открытка BudgetBattle #MoneyQuest', files: [XFile(path)]);
+      await SharePlus.instance.share(
+        ShareParams(
+          text: 'Моя открытка BudgetBattle #MoneyQuest',
+          files: [XFile(path)],
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Не удалось создать открытку: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось создать открытку: $e')),
+      );
     }
   }
 
@@ -219,6 +227,14 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
                 ),
               ),
             ),
+          const SizedBox(height: 8),
+          const Card(
+            child: ListTile(
+              leading: Icon(Icons.person_outline),
+              title: Text('Совет Airi'),
+              subtitle: Text('Планируй покупки заранее — импульсивные траты чаще всего рушат челлендж.'),
+            ),
+          ),
         ],
       ),
     );
