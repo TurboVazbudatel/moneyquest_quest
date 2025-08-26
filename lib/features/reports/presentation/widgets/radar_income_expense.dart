@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Радар «Доход vs Расход»
-/// - без собственного фона (использует стиль экрана/карточки)
-/// - внешнее кольцо + внутренние кольца и лучи
-/// - Доход: 0xFF32D74B, Расход: мягко-красный
+/// Радар «Доход vs Расход» — стиль: гладкие волнистые линии + glow.
+/// - Без собственного фона (используем фон приложения)
+/// - Кольца + радиальные деления
+/// - Income: 0xFF32D74B (мятно-зелёный), Expense: мягко-красный
 class RadarIncomeExpense extends StatelessWidget {
   final Map<String, double> incomeByCat;
   final Map<String, double> expenseByCat;
@@ -55,8 +55,8 @@ class _RadarPainter extends CustomPainter {
     required this.getExpense,
   });
 
-  static const incomeMain = Color(0xFF32D74B);     // мягко-мятный зелёный
-  static const expenseMain = Color(0xFFFF6B6B);    // мягко-красный
+  static const incomeColor = Color(0xFF32D74B);   // мягко-мятный зелёный
+  static const expenseColor = Color(0xFFFF6B6B);  // мягко-красный
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -64,7 +64,7 @@ class _RadarPainter extends CustomPainter {
     final cy = size.height / 2;
     final R = math.min(cx, cy) * 0.86;
 
-    // Кольца
+    // ==== Сетка: внешнее кольцо + внутренние кольца + лучи
     final outer = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
@@ -73,85 +73,83 @@ class _RadarPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
       ..color = Colors.white.withValues(alpha: 0.06);
+    final spoke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.white.withValues(alpha: 0.07);
 
     canvas.drawCircle(Offset(cx, cy), R, outer);
     for (final t in [0.25, 0.5, 0.75]) {
       canvas.drawCircle(Offset(cx, cy), R * t, ring);
     }
-
-    // Лучи
-    final spoke = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = Colors.white.withValues(alpha: 0.07);
     for (int i = 0; i < axes.length; i++) {
-      final ang = _angle(i, axes.length);
-      final p2 = Offset(cx + R * math.cos(ang), cy + R * math.sin(ang));
+      final a = _angle(i, axes.length);
+      final p2 = Offset(cx + R * math.cos(a), cy + R * math.sin(a));
       canvas.drawLine(Offset(cx, cy), p2, spoke);
     }
 
-    // Полигоны
-    final incomeFill = Paint()
-      ..style = PaintingStyle.fill
-      ..color = incomeMain.withValues(alpha: 0.16);
-    final incomeStroke = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..strokeJoin = StrokeJoin.round
-      ..color = incomeMain.withValues(alpha: 0.9);
-
-    final expenseFill = Paint()
-      ..style = PaintingStyle.fill
-      ..color = expenseMain.withValues(alpha: 0.16);
-    final expenseStroke = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..strokeJoin = StrokeJoin.round
-      ..color = expenseMain.withValues(alpha: 0.9);
-
-    final incomePath = Path();
-    final expensePath = Path();
-    for (int i = 0; i < axes.length; i++) {
-      final ang = _angle(i, axes.length);
-      final ri = (getIncome(axes[i]).clamp(0.0, 1.0)) * R;
-      final re = (getExpense(axes[i]).clamp(0.0, 1.0)) * R;
-
-      final pi = Offset(cx + ri * math.cos(ang), cy + ri * math.sin(ang));
-      final pe = Offset(cx + re * math.cos(ang), cy + re * math.sin(ang));
-
-      if (i == 0) {
-        incomePath.moveTo(pi.dx, pi.dy);
-        expensePath.moveTo(pe.dx, pe.dy);
-      } else {
-        incomePath.lineTo(pi.dx, pi.dy);
-        expensePath.lineTo(pe.dx, pe.dy);
+    // ==== Полярные точки (0..1) -> экранные координаты
+    List<Offset> _points(double Function(String) source) {
+      final pts = <Offset>[];
+      for (int i = 0; i < axes.length; i++) {
+        final a = _angle(i, axes.length);
+        final r = (source(axes[i]).clamp(0.0, 1.0)) * R;
+        pts.add(Offset(cx + r * math.cos(a), cy + r * math.sin(a)));
       }
+      // замкнём для удобства интерполяции
+      pts.add(pts.first);
+      return pts;
     }
-    incomePath.close();
-    expensePath.close();
 
-    // Мягкая тень под полигонами (без save/restore)
-    final softShadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.18)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-    canvas.drawPath(expensePath, softShadow);
-    canvas.drawPath(incomePath, softShadow);
+    final incomePts = _points(getIncome);
+    final expensePts = _points(getExpense);
 
-    canvas.drawPath(expensePath, expenseFill);
-    canvas.drawPath(expensePath, expenseStroke);
-    canvas.drawPath(incomePath, incomeFill);
-    canvas.drawPath(incomePath, incomeStroke);
+    // ==== Строим плавные кривые (Catmull-Rom через квадратичные Безье)
+    Path _smoothPath(List<Offset> pts) {
+      final path = Path();
+      if (pts.length < 3) return path;
+      path.moveTo(pts[0].dx, pts[0].dy);
+      for (int i = 1; i < pts.length - 1; i++) {
+        final p0 = pts[i - 1];
+        final p1 = pts[i];
+        final p2 = pts[i + 1];
+        // контрольная точка посередине сегмента p0-p2 (даёт мягкую волну)
+        final ctrl = Offset((p0.dx + p2.dx) / 2, (p0.dy + p2.dy) / 2);
+        path.quadraticBezierTo(ctrl.dx, ctrl.dy, p1.dx, p1.dy);
+      }
+      path.close();
+      return path;
+    }
 
-    // Подписи осей (без canvas.save/restore)
+    final incomePath = _smoothPath(incomePts);
+    final expensePath = _smoothPath(expensePts);
+
+    // ==== Линия + «свечение» (без заливки)
+    void _strokeWithGlow(Path path, Color c) {
+      final glow = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..color = c.withValues(alpha: 0.25)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      final stroke = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeJoin = StrokeJoin.round
+        ..color = c.withValues(alpha: 0.95);
+      canvas.drawPath(path, glow);
+      canvas.drawPath(path, stroke);
+    }
+
+    _strokeWithGlow(expensePath, expenseColor);
+    _strokeWithGlow(incomePath, incomeColor);
+
+    // ==== Подписи осей
     final tp = TextPainter(textDirection: TextDirection.ltr, maxLines: 1);
     for (int i = 0; i < axes.length; i++) {
-      final ang = _angle(i, axes.length);
+      final a = _angle(i, axes.length);
       final rr = R * 1.05;
-      final p = Offset(cx + rr * math.cos(ang), cy + rr * math.sin(ang));
-      tp.text = TextSpan(
-        text: axes[i],
-        style: const TextStyle(fontSize: 11, color: Color(0x99FFFFFF)),
-      );
+      final p = Offset(cx + rr * math.cos(a), cy + rr * math.sin(a));
+      tp.text = TextSpan(text: axes[i], style: const TextStyle(fontSize: 11, color: Color(0x99FFFFFF)));
       tp.layout();
       final off = Offset(p.dx - tp.width / 2, p.dy - tp.height / 2);
       tp.paint(canvas, off);
