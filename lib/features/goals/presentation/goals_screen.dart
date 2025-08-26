@@ -40,7 +40,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final percent = _goal > 0 ? (_progress / _goal).clamp(0, 1) : 0.0;
+    final double percent = _goal > 0
+        ? ((_progress / _goal).clamp(0.0, 1.0) as double)
+        : 0.0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Мои цели')),
