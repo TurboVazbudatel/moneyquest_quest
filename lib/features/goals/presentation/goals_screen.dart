@@ -30,7 +30,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
       _progress = p;
     });
 
-    // Проверим достижение
     if (_goal > 0 && _progress >= _goal) {
       await _ach.unlock('goal_reached');
     }
@@ -47,9 +46,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double percent = _goal > 0
-        ? ((_progress / _goal).clamp(0.0, 1.0) as double)
-        : 0.0;
+    final double percent = _goal > 0 ? ((_progress / _goal).clamp(0.0, 1.0)).toDouble() : 0.0;
 
     final bool reached = _goal > 0 && percent >= 1.0;
     final bool almost = _goal > 0 && percent >= 0.8 && percent < 1.0;
@@ -59,9 +56,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (_goal == 0) ...[
-            const Text('Цель пока не установлена'),
-          ],
+          if (_goal == 0) const Text('Цель пока не установлена'),
           if (_goal > 0)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

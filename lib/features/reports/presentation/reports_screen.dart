@@ -39,13 +39,13 @@ class ReportsScreen extends StatelessWidget {
                   dataSets: [
                     RadarDataSet(
                       dataEntries: incomes.map((v) => RadarEntry(value: v)).toList(),
-                      fillColor: const Color(0xFF34D399).withOpacity(0.45),
+                      fillColor: const Color(0xFF34D399).withValues(alpha: 0.45),
                       borderColor: const Color(0xFF34D399),
                       entryRadius: 2, borderWidth: 2,
                     ),
                     RadarDataSet(
                       dataEntries: expenses.map((v) => RadarEntry(value: v)).toList(),
-                      fillColor: const Color(0xFFF87171).withOpacity(0.45),
+                      fillColor: const Color(0xFFF87171).withValues(alpha: 0.45),
                       borderColor: const Color(0xFFF87171),
                       entryRadius: 2, borderWidth: 2,
                     ),

@@ -98,7 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     await _svc.add(amount: amt, type: type, category: category);
                     if (!mounted) return;
                     Navigator.pop(ctx);
-                    await _load(); // перезагрузим баллы/советы/баланс
+                    await _load();
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Сохранено')),
                     );
@@ -130,11 +131,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Card(
+          const Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Row(
-                children: const [
+                children: [
                   Icon(Icons.lightbulb_outline),
                   SizedBox(width: 12),
                   Expanded(child: Text('Подсказка: добавь первую транзакцию — диаграммы сразу обновятся.')),

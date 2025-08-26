@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/transactions_service.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../share/widgets/share_card.dart';
 
 class BudgetBattleScreen extends StatefulWidget {
   const BudgetBattleScreen({super.key});
@@ -15,13 +16,15 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
   final _svc = ChallengesService();
   final _tx = TransactionsService();
 
-  final _ctrl = TextEditingController(text: '500'); // дефолтный дневной лимит
+  final _ctrl = TextEditingController(text: '500');
   Timer? _timer;
 
   BattleStatus _status = BattleStatus.idle;
   double _limit = 0;
   double _spent = 0;
   Duration _left = Duration.zero;
+
+  final _renderer = ShareRenderer();
 
   @override
   void initState() {
@@ -78,7 +81,7 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
     await _refresh();
   }
 
-  Future<void> _shareResult() async {
+  Future<void> _shareText() async {
     final ok = _status == BattleStatus.finishedWin;
     final text = ok
         ? 'Я прошёл BudgetBattle! 🏆 Уложился в лимит ${_limit.toStringAsFixed(0)} ₽ за 24 часа. #MoneyQuest'
@@ -86,12 +89,46 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
     await Share.share(text);
   }
 
+  Future<void> _shareCard() async {
+    final win = _status == BattleStatus.finishedWin;
+    final bullets = <String>[
+      'Лимит: ${_limit.toStringAsFixed(0)} ₽',
+      'Потрачено: ${_spent.toStringAsFixed(0)} ₽',
+      if (win) '+100 баллов',
+    ];
+
+    final card = ShareCard(
+      title: win ? 'BudgetBattle — Победа!' : 'BudgetBattle — Я стараюсь',
+      subtitle: '24 часа в лимите',
+      bullets: bullets,
+      win: win,
+      footer: 'MoneyQuest • Airi',
+    );
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: _renderer.wrap(FittedBox(child: card)),
+      ),
+    );
+
+    try {
+      final path = await _renderer.renderToPngFile(pixelRatio: 2.5);
+      await Share.shareXFiles([XFile(path)], text: 'Моя открытка BudgetBattle #MoneyQuest');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Не удалось создать открытку: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final running = _status == BattleStatus.running;
     final finished = _status == BattleStatus.finishedWin || _status == BattleStatus.finishedFail;
     final over = _limit > 0 && _spent > _limit;
-    final progress = _limit > 0 ? (_spent / _limit).clamp(0.0, 1.0) as double : 0.0;
+    final double progress = _limit > 0 ? ((_spent / _limit).clamp(0.0, 1.0)).toDouble() : 0.0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('BudgetBattle')),
@@ -165,9 +202,16 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
                         const SizedBox(width: 12),
                         if (finished)
                           OutlinedButton.icon(
-                            onPressed: _shareResult,
-                            icon: const Icon(Icons.share),
-                            label: const Text('Поделиться'),
+                            onPressed: _shareText,
+                            icon: const Icon(Icons.ios_share),
+                            label: const Text('Поделиться текстом'),
+                          ),
+                        const SizedBox(width: 12),
+                        if (finished)
+                          ElevatedButton.icon(
+                            onPressed: _shareCard,
+                            icon: const Icon(Icons.image_outlined),
+                            label: const Text('Открытка'),
                           ),
                       ],
                     ),

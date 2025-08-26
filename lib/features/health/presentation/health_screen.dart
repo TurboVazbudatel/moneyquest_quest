@@ -40,7 +40,7 @@ class HealthScreen extends StatelessWidget {
                       spots: spots.isEmpty ? [const FlSpot(0,0)] : spots,
                       barWidth: 4,
                       color: const Color(0xFF34D399),
-                      belowBarData: BarAreaData(show: true, color: Color(0xFF34D399).withOpacity(0.28)),
+                      belowBarData: BarAreaData(show: true, color: Color(0xFF34D399).withValues(alpha: 0.28)),
                       dotData: FlDotData(show: true),
                     ),
                   ],
@@ -50,12 +50,12 @@ class HealthScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Card(
+        const Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text('Рекомендации Airi', style: TextStyle(fontWeight: FontWeight.w600)),
                 SizedBox(height: 8),
                 Text('• Если удержишь траты на текущем уровне 2 недели — дойдёшь до цели быстрее.'),

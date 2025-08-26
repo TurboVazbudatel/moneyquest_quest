@@ -1,11 +1,10 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart'; // ✅ добавили
+import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
-/// Виджет открытки и хелпер для сохранения в PNG
 class ShareCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -70,14 +69,14 @@ class ShareCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
             ),
           ),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
+              color: Colors.white.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Column(
@@ -86,7 +85,7 @@ class ShareCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white.withOpacity(0.9), size: 24),
+                    Icon(Icons.check_circle, color: Colors.white.withValues(alpha: 0.9), size: 24),
                     const SizedBox(width: 10),
                     Expanded(child: Text(b, style: const TextStyle(color: Colors.white, fontSize: 28))),
                   ],
@@ -106,7 +105,7 @@ class ShareCard extends StatelessWidget {
               const Spacer(),
               Text(
                 footer,
-                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 26, fontWeight: FontWeight.w600),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 26, fontWeight: FontWeight.w600),
               ),
             ],
           ),
