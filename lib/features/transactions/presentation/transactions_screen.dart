@@ -15,12 +15,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   List<Map<String, dynamic>> _items = [];
   List<Map<String, dynamic>> _visible = [];
 
-  // фильтры/поиск
+  // фильтры
   String _query = '';
-  TxType? _typeFilter; // null = все, income/expense
+  TxType? _typeFilter;
   String? _categoryFilter;
+  String? _dateFilter; // "today","week","month" или null
 
-  // сводка (по _visible)
+  // сводка
   double _sumIncome = 0;
   double _sumExpense = 0;
 
@@ -45,12 +46,31 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       list = list.where((e) => (e['type'] == 'income') == needIncome).toList();
     }
 
-    // категория (точное совпадение)
+    // категория
     if (_categoryFilter != null && _categoryFilter!.isNotEmpty) {
       list = list.where((e) => (e['category'] as String?) == _categoryFilter).toList();
     }
 
-    // поиск по заметке/категории/сумме
+    // даты
+    if (_dateFilter != null) {
+      final now = DateTime.now();
+      list = list.where((e) {
+        final ms = (e['date'] as int?) ?? 0;
+        final d = DateTime.fromMillisecondsSinceEpoch(ms);
+        if (_dateFilter == 'today') {
+          return d.year == now.year && d.month == now.month && d.day == now.day;
+        } else if (_dateFilter == 'week') {
+          final start = now.subtract(Duration(days: now.weekday - 1));
+          final end = start.add(const Duration(days: 7));
+          return d.isAfter(start.subtract(const Duration(days: 1))) && d.isBefore(end);
+        } else if (_dateFilter == 'month') {
+          return d.year == now.year && d.month == now.month;
+        }
+        return true;
+      }).toList();
+    }
+
+    // поиск
     if (_query.isNotEmpty) {
       final q = _query.toLowerCase();
       list = list.where((e) {
@@ -61,7 +81,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       }).toList();
     }
 
-    // сводка по видимым
+    // сводка
     double inc = 0, exp = 0;
     for (final e in list) {
       final a = (e['amount'] as num).toDouble();
@@ -74,6 +94,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       _sumExpense = exp;
     });
   }
+
+  // остальной код (add/edit/repeat/remove/initState) без изменений...
 
   Future<void> _add() async {
     final ok = await showModalBottomSheet<bool>(
@@ -148,7 +170,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 controller: _searchCtrl,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  hintText: 'Поиск: заметка, категория, сумма',
+                  hintText: 'Поиск...',
                   border: InputBorder.none,
                 ),
                 onChanged: (v) {
@@ -159,7 +181,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             : const Text('Транзакции'),
         actions: [
           IconButton(
-            tooltip: _searchMode ? 'Закрыть поиск' : 'Поиск',
             icon: Icon(_searchMode ? Icons.close : Icons.search),
             onPressed: () {
               setState(() {
@@ -173,12 +194,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             },
           ),
           IconButton(
-            tooltip: 'Сбросить фильтры',
             icon: const Icon(Icons.filter_alt_off_outlined),
             onPressed: () {
               setState(() {
                 _typeFilter = null;
                 _categoryFilter = null;
+                _dateFilter = null;
                 _query = '';
                 _searchCtrl.clear();
               });
@@ -199,31 +220,42 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Row(
               children: [
+                // тип
                 FilterChip(
                   label: const Text('Все'),
                   selected: _typeFilter == null,
-                  onSelected: (_) {
-                    setState(() => _typeFilter = null);
-                    _applyFilters();
-                  },
+                  onSelected: (_) { setState(() => _typeFilter = null); _applyFilters(); },
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
                   label: const Text('Расход'),
                   selected: _typeFilter == TxType.expense,
-                  onSelected: (_) {
-                    setState(() => _typeFilter = TxType.expense);
-                    _applyFilters();
-                  },
+                  onSelected: (_) { setState(() => _typeFilter = TxType.expense); _applyFilters(); },
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
                   label: const Text('Доход'),
                   selected: _typeFilter == TxType.income,
-                  onSelected: (_) {
-                    setState(() => _typeFilter = TxType.income);
-                    _applyFilters();
-                  },
+                  onSelected: (_) { setState(() => _typeFilter = TxType.income); _applyFilters(); },
+                ),
+                const SizedBox(width: 12),
+                // дата
+                FilterChip(
+                  label: const Text('Сегодня'),
+                  selected: _dateFilter == 'today',
+                  onSelected: (_) { setState(() => _dateFilter = 'today'); _applyFilters(); },
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text('Неделя'),
+                  selected: _dateFilter == 'week',
+                  onSelected: (_) { setState(() => _dateFilter = 'week'); _applyFilters(); },
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text('Месяц'),
+                  selected: _dateFilter == 'month',
+                  onSelected: (_) { setState(() => _dateFilter = 'month'); _applyFilters(); },
                 ),
                 const SizedBox(width: 12),
                 // категории
@@ -232,17 +264,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   FilterChip(
                     label: Text(c),
                     selected: _categoryFilter == c,
-                    onSelected: (_) {
-                      setState(() => _categoryFilter = _categoryFilter == c ? null : c);
-                      _applyFilters();
-                    },
+                    onSelected: (_) { setState(() => _categoryFilter = _categoryFilter == c ? null : c); _applyFilters(); },
                   ),
                 ],
               ],
             ),
           ),
-
-          // === сводка по видимым ===
+          // сводка (как мы сделали ранее)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Card(
@@ -250,17 +278,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    _SummaryPill(
-                      label: 'Доход',
-                      value: _sumIncome,
-                      color: const Color(0xFF32D74B),
-                    ),
+                    _SummaryPill(label: 'Доход', value: _sumIncome, color: const Color(0xFF32D74B)),
                     const SizedBox(width: 12),
-                    _SummaryPill(
-                      label: 'Расход',
-                      value: _sumExpense,
-                      color: const Color(0xFFFF453A),
-                    ),
+                    _SummaryPill(label: 'Расход', value: _sumExpense, color: const Color(0xFFFF453A)),
                     const Spacer(),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -277,8 +297,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
             ),
           ),
-
           const Divider(height: 0),
+          // список
           Expanded(
             child: RefreshIndicator(
               onRefresh: _load,
@@ -296,12 +316,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     child: ListTile(
                       onTap: () => _edit(e),
                       leading: CircleAvatar(
-                        // миграция с withOpacity -> withValues(alpha: ...)
                         backgroundColor: (isInc ? Colors.green : Colors.red).withValues(alpha: 0.15),
-                        child: Icon(
-                          isInc ? Icons.arrow_downward : Icons.arrow_upward,
-                          color: isInc ? Colors.green : Colors.red,
-                        ),
+                        child: Icon(isInc ? Icons.arrow_downward : Icons.arrow_upward,
+                            color: isInc ? Colors.green : Colors.red),
                       ),
                       title: Text('${isInc ? '+' : '-'} ${(e['amount'] as num).toStringAsFixed(2)} ₽'),
                       subtitle: Text('${e['category']} • ${dt.day}.${dt.month}.${dt.year}'
