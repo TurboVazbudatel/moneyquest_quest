@@ -5,6 +5,7 @@ import 'features/reports/presentation/reports_screen.dart';
 import 'features/health/presentation/health_screen.dart';
 import 'features/goals/presentation/goals_screen.dart';
 import 'features/budgets/presentation/budgets_screen.dart';
+import 'features/points/presentation/points_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class _RootNavState extends State<_RootNav> {
     HealthScreen(),
     GoalsScreen(),
     BudgetsScreen(),
+    PointsScreen(),
   ];
 
   @override
@@ -66,6 +68,7 @@ class _RootNavState extends State<_RootNav> {
           NavigationDestination(icon: Icon(Icons.monitor_heart_outlined), selectedIcon: Icon(Icons.monitor_heart), label: 'ФинЗдоровье'),
           NavigationDestination(icon: Icon(Icons.flag_outlined), selectedIcon: Icon(Icons.flag), label: 'Цели'),
           NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Бюджеты'),
+          NavigationDestination(icon: Icon(Icons.emoji_events_outlined), selectedIcon: Icon(Icons.emoji_events), label: 'Баллы'),
         ],
       ),
     );
