@@ -3,6 +3,7 @@ import 'data/storage/hive_store.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/reports/presentation/reports_screen.dart';
 import 'features/health/presentation/health_screen.dart';
+import 'features/goals/presentation/goals_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +43,7 @@ class _RootNav extends StatefulWidget {
 
 class _RootNavState extends State<_RootNav> {
   int index = 0;
-  final pages = const [HomeScreen(), ReportsScreen(), HealthScreen()];
+  final pages = const [HomeScreen(), ReportsScreen(), HealthScreen(), GoalsScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +57,7 @@ class _RootNavState extends State<_RootNav> {
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.pie_chart_outline), selectedIcon: Icon(Icons.pie_chart), label: 'Диаграммы'),
           NavigationDestination(icon: Icon(Icons.monitor_heart_outlined), selectedIcon: Icon(Icons.monitor_heart), label: 'ФинЗдоровье'),
+          NavigationDestination(icon: Icon(Icons.flag_outlined), selectedIcon: Icon(Icons.flag), label: 'Цели'),
         ],
       ),
     );
