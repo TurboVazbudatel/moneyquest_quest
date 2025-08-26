@@ -45,6 +45,27 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (ok == true) await _load();
   }
 
+  Future<void> _repeat(Map<String, dynamic> e) async {
+    // создаём новую операцию на основе существующей, но с сегодняшней датой и без key
+    final init = <String, dynamic>{
+      'type': e['type'],
+      'amount': e['amount'],
+      'category': e['category'],
+      'note': e['note'],
+      'date': DateTime.now().millisecondsSinceEpoch,
+    };
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => AddTxSheet(initial: init), // itemKey не передаём — будет Add
+    );
+    if (ok == true) await _load();
+  }
+
   Future<void> _remove(dynamic key) async {
     await _svc.remove(key);
     await _load();
@@ -72,7 +93,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           itemBuilder: (ctx, i) {
             final e = _items[i];
             final isInc = e['type'] == 'income';
-            final dt = DateTime.fromMillisecondsSinceEpoch(e['date'] as int);
+            final dt = DateTime.fromMillisecondsSinceEpoch((e['date'] as int?) ?? 0);
             return Dismissible(
               key: ValueKey(e['key']),
               background: Container(color: Colors.redAccent),
@@ -87,7 +108,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 title: Text('${isInc ? '+' : '-'} ${(e['amount'] as num).toStringAsFixed(2)} ₽'),
                 subtitle: Text('${e['category']} • ${dt.day}.${dt.month}.${dt.year}'
                     '${e['note'] != null ? ' • ${e['note']}' : ''}'),
-                trailing: const Icon(Icons.edit_outlined),
+                trailing: PopupMenuButton<String>(
+                  onSelected: (v) {
+                    if (v == 'edit') _edit(e);
+                    if (v == 'repeat') _repeat(e);
+                  },
+                  itemBuilder: (ctx) => const [
+                    PopupMenuItem(value: 'edit', child: Text('Редактировать')),
+                    PopupMenuItem(value: 'repeat', child: Text('Повторить')),
+                  ],
+                ),
               ),
             );
           },

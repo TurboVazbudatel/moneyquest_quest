@@ -35,7 +35,7 @@ class _AddTxSheetState extends State<AddTxSheet> {
       _type = TxType.expense;
       _category = TransactionsService.defaultExpenseCats.first;
     }
-    // если категория не входит в текущий набор — добавим, чтобы выпадающий список не падал
+    // гарантируем, что выбранная категория есть в списке
     final cats = _cats;
     if (!cats.contains(_category)) cats.add(_category);
   }
@@ -43,6 +43,16 @@ class _AddTxSheetState extends State<AddTxSheet> {
   List<String> get _cats => _type == TxType.income
       ? List.of(TransactionsService.defaultIncomeCats)
       : List.of(TransactionsService.defaultExpenseCats);
+
+  List<double> get _presets => _type == TxType.income
+      ? <double>[1000, 5000, 10000, 20000]
+      : <double>[100, 300, 500, 1000, 2000];
+
+  void _applyPreset(double v) {
+    // сумма хранится всегда положительной; знак рисуем только в UI
+    _amountCtrl.text = v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
+    setState(() {});
+  }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -145,6 +155,22 @@ class _AddTxSheetState extends State<AddTxSheet> {
               _type = s.first;
               _category = _cats.first;
             }),
+          ),
+          const SizedBox(height: 12),
+          // Пресеты сумм
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final v in _presets)
+                  OutlinedButton(
+                    onPressed: () => _applyPreset(v),
+                    child: Text((isIncome ? '+ ' : '- ') + v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2)),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
