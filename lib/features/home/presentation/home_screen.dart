@@ -3,6 +3,8 @@ import '../../../data/services/profile_service.dart';
 import '../../transactions/presentation/add_tx_sheet.dart';
 import '../../transactions/presentation/transactions_screen.dart';
 import '../../budgets/presentation/budgets_manager_screen.dart';
+import '../../health/presentation/health_screen.dart';
+import '../../reports/presentation/reports_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -53,6 +55,20 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (_) => const BudgetsManagerScreen()),
             ),
           ),
+          IconButton(
+            tooltip: 'ФинЗдоровье',
+            icon: const Icon(Icons.favorite),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HealthScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Диаграммы',
+            icon: const Icon(Icons.radar),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ReportsScreen()),
+            ),
+          ),
         ],
       ),
       body: ListView(
@@ -78,11 +94,13 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.sports_esports_outlined),
-              title: const Text('BudgetBattle'),
-              subtitle: const Text('24 часа уложиться в лимит'),
+              leading: const Icon(Icons.radar),
+              title: const Text('Диаграммы'),
+              subtitle: const Text('Радар доходов и расходов'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.pushNamed(context, '/root', arguments: 7),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ReportsScreen()),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -94,6 +112,18 @@ class _HomeScreenState extends State<HomeScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const BudgetsManagerScreen()),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.favorite),
+              title: const Text('ФинЗдоровье'),
+              subtitle: const Text('Баланс доходов и расходов'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HealthScreen()),
               ),
             ),
           ),
