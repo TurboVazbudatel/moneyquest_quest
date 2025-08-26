@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../data/services/transactions_service.dart';
 
 class AddTxSheet extends StatefulWidget {
-  const AddTxSheet({super.key});
+  final Map<String, dynamic>? initial;
+  final dynamic itemKey;
+
+  const AddTxSheet({super.key, this.initial, this.itemKey});
 
   @override
   State<AddTxSheet> createState() => _AddTxSheetState();
@@ -11,21 +14,35 @@ class AddTxSheet extends StatefulWidget {
 class _AddTxSheetState extends State<AddTxSheet> {
   final _svc = TransactionsService();
 
-  TxType _type = TxType.expense;
+  late TxType _type;
   final _amountCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
-  String _category = 'Еда';
+  late String _category;
   DateTime _date = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _category = TransactionsService.defaultExpenseCats.first;
+    if (widget.initial != null) {
+      final e = widget.initial!;
+      _type = (e['type'] == 'income') ? TxType.income : TxType.expense;
+      _amountCtrl.text = ((e['amount'] as num?)?.toString() ?? '');
+      _noteCtrl.text = (e['note'] as String?) ?? '';
+      _category = (e['category'] as String?) ?? 'Другое';
+      final ms = (e['date'] as int?) ?? DateTime.now().millisecondsSinceEpoch;
+      _date = DateTime.fromMillisecondsSinceEpoch(ms);
+    } else {
+      _type = TxType.expense;
+      _category = TransactionsService.defaultExpenseCats.first;
+    }
+    // если категория не входит в текущий набор — добавим, чтобы выпадающий список не падал
+    final cats = _cats;
+    if (!cats.contains(_category)) cats.add(_category);
   }
 
   List<String> get _cats => _type == TxType.income
-      ? TransactionsService.defaultIncomeCats
-      : TransactionsService.defaultExpenseCats;
+      ? List.of(TransactionsService.defaultIncomeCats)
+      : List.of(TransactionsService.defaultExpenseCats);
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -46,20 +63,55 @@ class _AddTxSheetState extends State<AddTxSheet> {
       );
       return;
     }
-    await _svc.add(
-      amount: amount,
-      type: _type,
-      category: _category,
-      date: _date,
-      note: _noteCtrl.text.trim(),
-    );
+    if (widget.itemKey != null) {
+      await _svc.update(
+        key: widget.itemKey,
+        amount: amount,
+        type: _type,
+        category: _category,
+        date: _date,
+        note: _noteCtrl.text.trim(),
+      );
+    } else {
+      await _svc.add(
+        amount: amount,
+        type: _type,
+        category: _category,
+        date: _date,
+        note: _noteCtrl.text.trim(),
+      );
+    }
     if (!mounted) return;
     Navigator.pop(context, true);
+  }
+
+  Future<void> _delete() async {
+    if (widget.itemKey == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Удалить транзакцию?'),
+        content: const Text('Это действие нельзя отменить.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Удалить')),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await _svc.remove(widget.itemKey);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isIncome = _type == TxType.income;
+    final title = widget.itemKey != null ? 'Редактировать' : 'Новая операция';
+    final cats = _cats;
+    if (!cats.contains(_category)) cats.add(_category);
+
     return Padding(
       padding: EdgeInsets.only(
         left: 16, right: 16, top: 12,
@@ -70,6 +122,19 @@ class _AddTxSheetState extends State<AddTxSheet> {
         children: [
           Container(width: 36, height: 4, margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+          Row(
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              const Spacer(),
+              if (widget.itemKey != null)
+                IconButton(
+                  tooltip: 'Удалить',
+                  onPressed: _delete,
+                  icon: const Icon(Icons.delete_outline),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           SegmentedButton<TxType>(
             segments: const [
               ButtonSegment(value: TxType.expense, label: Text('Расход'), icon: Icon(Icons.remove_circle_outline)),
@@ -95,7 +160,7 @@ class _AddTxSheetState extends State<AddTxSheet> {
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _category,
-            items: _cats.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+            items: cats.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
             onChanged: (v) => setState(() => _category = v ?? _category),
             decoration: const InputDecoration(
               labelText: 'Категория',

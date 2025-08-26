@@ -12,15 +12,13 @@ class TransactionsService {
     return Hive.box(_boxName);
   }
 
-  /// Базовые категории
   static const defaultIncomeCats = [
-    'Зарплата', 'Подработки', 'Проценты', 'Подарки', 'Другое'
+    'Зарплата','Подработки','Проценты','Подарки','Другое'
   ];
   static const defaultExpenseCats = [
-    'Еда', 'Транспорт', 'Покупки', 'Развлечения', 'Коммуналка', 'Другое'
+    'Еда','Транспорт','Покупки','Развлечения','Коммуналка','Другое'
   ];
 
-  /// Все транзакции (по дате убыв.)
   Future<List<Map<String, dynamic>>> all() async {
     final box = await _box();
     final List<Map<String, dynamic>> out = [];
@@ -49,14 +47,30 @@ class TransactionsService {
     });
   }
 
+  Future<void> update({
+    required dynamic key,
+    required double amount,
+    required TxType type,
+    required String category,
+    required DateTime date,
+    String? note,
+  }) async {
+    final box = await _box();
+    if (!box.containsKey(key)) return;
+    await box.put(key, {
+      'amount': amount,
+      'type': type == TxType.income ? 'income' : 'expense',
+      'category': category,
+      'date': date.millisecondsSinceEpoch,
+      if (note != null && note.isNotEmpty) 'note': note,
+    });
+  }
+
   Future<void> remove(dynamic key) async {
     final box = await _box();
     if (box.containsKey(key)) await box.delete(key);
   }
 
-  /// === Методы, которых не хватало старому коду ===
-
-  /// Текущий баланс (доходы - расходы)
   Future<double> currentBalance() async {
     final items = await all();
     double bal = 0;
@@ -67,7 +81,6 @@ class TransactionsService {
     return bal;
   }
 
-  /// Суммы по категориям (доход положительный, расход отрицательный)
   Future<Map<String, double>> totalsByCategory() async {
     final items = await all();
     final Map<String, double> map = {};
@@ -79,7 +92,6 @@ class TransactionsService {
     return map;
   }
 
-  /// Кумулятивный баланс по дням (для графиков)
   Future<List<(DateTime, double)>> cumulativeByDay() async {
     final items = await all();
     items.sort((a, b) => (a['date'] as int).compareTo(b['date'] as int));

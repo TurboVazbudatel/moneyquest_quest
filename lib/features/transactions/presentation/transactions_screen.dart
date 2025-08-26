@@ -32,6 +32,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (ok == true) await _load();
   }
 
+  Future<void> _edit(Map<String, dynamic> e) async {
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => AddTxSheet(initial: e, itemKey: e['key']),
+    );
+    if (ok == true) await _load();
+  }
+
   Future<void> _remove(dynamic key) async {
     await _svc.remove(key);
     await _load();
@@ -65,6 +78,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               background: Container(color: Colors.redAccent),
               onDismissed: (_) => _remove(e['key']),
               child: ListTile(
+                onTap: () => _edit(e),
                 leading: CircleAvatar(
                   backgroundColor: (isInc ? Colors.green : Colors.red).withOpacity(0.15),
                   child: Icon(isInc ? Icons.arrow_downward : Icons.arrow_upward,
@@ -73,6 +87,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 title: Text('${isInc ? '+' : '-'} ${(e['amount'] as num).toStringAsFixed(2)} ₽'),
                 subtitle: Text('${e['category']} • ${dt.day}.${dt.month}.${dt.year}'
                     '${e['note'] != null ? ' • ${e['note']}' : ''}'),
+                trailing: const Icon(Icons.edit_outlined),
               ),
             );
           },
