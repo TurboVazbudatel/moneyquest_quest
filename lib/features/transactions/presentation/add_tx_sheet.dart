@@ -35,7 +35,6 @@ class _AddTxSheetState extends State<AddTxSheet> {
       _type = TxType.expense;
       _category = TransactionsService.defaultExpenseCats.first;
     }
-    // гарантируем, что выбранная категория есть в списке
     final cats = _cats;
     if (!cats.contains(_category)) cats.add(_category);
   }
@@ -48,9 +47,20 @@ class _AddTxSheetState extends State<AddTxSheet> {
       ? <double>[1000, 5000, 10000, 20000]
       : <double>[100, 300, 500, 1000, 2000];
 
+  double _currentAmount() =>
+      double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 0;
+
   void _applyPreset(double v) {
-    // сумма хранится всегда положительной; знак рисуем только в UI
-    _amountCtrl.text = v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
+    _amountCtrl.text =
+        v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
+    setState(() {});
+  }
+
+  void _bump(double delta) {
+    final v = (_currentAmount() + delta);
+    if (v <= 0) return;
+    _amountCtrl.text =
+        v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
     setState(() {});
   }
 
@@ -66,7 +76,7 @@ class _AddTxSheetState extends State<AddTxSheet> {
   }
 
   Future<void> _save() async {
-    final amount = double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 0;
+    final amount = _currentAmount();
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите сумму больше 0')),
@@ -157,6 +167,7 @@ class _AddTxSheetState extends State<AddTxSheet> {
             }),
           ),
           const SizedBox(height: 12),
+
           // Пресеты сумм
           Align(
             alignment: Alignment.centerLeft,
@@ -173,16 +184,65 @@ class _AddTxSheetState extends State<AddTxSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _amountCtrl,
-            autofocus: true,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: 'Сумма',
-              prefixText: isIncome ? '+ ' : '- ',
-              border: const OutlineInputBorder(),
-            ),
+
+          // Поле суммы + быстрые корректировки
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _amountCtrl,
+                  autofocus: true,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Сумма',
+                    prefixText: isIncome ? '+ ' : '- ',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                children: [
+                  SizedBox(
+                    height: 36,
+                    child: OutlinedButton(
+                      onPressed: () => _bump(50),
+                      child: const Text('+50'),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 36,
+                    child: OutlinedButton(
+                      onPressed: () => _bump(-50),
+                      child: const Text('-50'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 8),
+              Column(
+                children: [
+                  SizedBox(
+                    height: 36,
+                    child: OutlinedButton(
+                      onPressed: () => _bump(10),
+                      child: const Text('+10'),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 36,
+                    child: OutlinedButton(
+                      onPressed: () => _bump(-10),
+                      child: const Text('-10'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
+
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _category,
