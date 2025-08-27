@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/profile_service.dart';
 
@@ -10,125 +10,181 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final _page = PageController();
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with SingleTickerProviderStateMixin {
   final _auth = AuthService();
   final _profile = ProfileService();
   final _nameCtrl = TextEditingController();
 
-  Future<void> _afterLogin({bool guest = false}) async {
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Познакомимся?'),
-        content: TextField(
-          controller: _nameCtrl,
-          decoration: const InputDecoration(labelText: 'Как тебя зовут?'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Пропустить')),
-          FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Продолжить')),
-        ],
-      ),
-    );
+  late final AnimationController _ac;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ac = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _fade = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
+    _slide = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _ac, curve: Curves.easeOutCubic));
+    _ac.forward();
+    _prefillName();
+  }
+
+  Future<void> _prefillName() async {
+    final n = await _profile.getName();
+    if (!mounted) return;
+    if ((n ?? '').isNotEmpty) _nameCtrl.text = n!;
+  }
+
+  @override
+  void dispose() {
+    _ac.dispose();
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _continueAsGuest() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _loading = true);
     final name = _nameCtrl.text.trim();
-    if (name.isNotEmpty) await _profile.setName(name);
-    await _profile.setOnboarded(true);
-    await _profile.setGuest(guest);
-    if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed('/root');
-  }
-
-  Future<void> _loginGuest() async {
-    await _auth.signInAnonymously();
-    if (!mounted) return;
-    await _afterLogin(guest: true);
-  }
-
-  Future<void> _openLink(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (name.isNotEmpty) {
+      await _profile.setName(name);
     }
+    try {
+      await _auth.signInAnonymously();
+      if (!mounted) return;
+      Navigator.pop(context); // закрываем онбординг и возвращаемся на Home
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Добро пожаловать! Вход как гость выполнен')),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка входа: ${e.message ?? e.code}')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _comingSoon(String provider) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$provider — скоро ✨')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final slides = [
-      ('Веди бюджет как игру', 'Получай баллы и открывай достижения.'),
-      ('Челлендж BudgetBattle', 'Уложись в лимит за 24 часа и забирай +100 баллов.'),
-      ('Airi — твой помощник', 'Советы по бюджету без воды и в человеческом стиле.'),
-    ];
-
+    final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _page,
-                itemCount: slides.length,
-                itemBuilder: (_, i) {
-                  final (title, text) = slides[i];
-                  return Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 24),
-                        Text(title, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-                        const SizedBox(height: 12),
-                        Text(text, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
-                        const SizedBox(height: 24),
-                        Expanded(
-                          child: Center(
-                            child: Icon(
-                              i == 0 ? Icons.emoji_events_outlined : (i == 1 ? Icons.sports_esports_outlined : Icons.person_outline),
-                              size: 120,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: Column(
+            children: [
+              // Кнопка закрыть
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  tooltip: 'Закрыть',
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Airi — анимация появления
+              FadeTransition(
+                opacity: _fade,
+                child: SlideTransition(
+                  position: _slide,
+                  child: Column(
+                    children: [
+                      // Аватар Airi (можно заменить на картинку позже)
+                      Container(
+                        width: 108,
+                        height: 108,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF6FE1B2), Color(0xFF32D74B)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                },
+                        child: const Center(
+                          child: Text('A', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Привет! Меня зовут Airi, а тебя?',
+                          style: theme.textTheme.headlineSmall),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Я помогу подружиться с бюджетом и сделать финансы понятными 💚',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+              const SizedBox(height: 24),
+              // Имя
+              TextField(
+                controller: _nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Твоё имя',
+                  border: OutlineInputBorder(),
+                ),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _continueAsGuest(),
+              ),
+              const SizedBox(height: 16),
+              // Кнопка гостя
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _loading ? null : _continueAsGuest,
+                  icon: _loading
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.rocket_launch),
+                  label: const Text('Войти как гость'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Провайдеры (заглушки, чтобы не ломать сборку)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  FilledButton.icon(
-                    onPressed: _loginGuest,
-                    icon: const Icon(Icons.person_outline),
-                    label: const Text('Войти как гость'),
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                  ),
-                  const SizedBox(height: 8),
                   OutlinedButton.icon(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Google будет доступен в мобильных сборках')),
-                    ),
+                    onPressed: () => _comingSoon('Google'),
                     icon: const Icon(Icons.g_mobiledata),
-                    label: const Text('Google (скоро)'),
-                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                    label: const Text('Google'),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(width: 12),
                   OutlinedButton.icon(
-                    onPressed: () => _openLink('https://t.me/'),
-                    icon: const Icon(Icons.send_outlined),
-                    label: const Text('Telegram (скоро)'),
-                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                    onPressed: () => _comingSoon('Apple'),
+                    icon: const Icon(Icons.apple),
+                    label: const Text('Apple'),
                   ),
-                  const SizedBox(height: 12),
-                  Text('Нажимая вход, ты принимаешь Политику и Условия',
-                      style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => _comingSoon('Telegram'),
+                    icon: const Icon(Icons.send),
+                    label: const Text('Telegram'),
+                  ),
                 ],
               ),
-            ),
-          ],
+              const Spacer(),
+              Text(
+                'Продолжая, вы соглашаетесь с условиями сервиса',
+                style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
+              ),
+            ],
+          ),
         ),
       ),
     );
