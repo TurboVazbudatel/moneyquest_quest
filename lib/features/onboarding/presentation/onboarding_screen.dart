@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import "../../home/presentation/home_screen.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/profile_service.dart';
@@ -56,7 +57,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     try {
       await _auth.signInAnonymously();
       if (!mounted) return;
-      Navigator.pop(context); // закрываем онбординг и возвращаемся на Home
+      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const HomeScreen()), (route) => false); // закрываем онбординг и возвращаемся на Home
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Добро пожаловать! Вход как гость выполнен')),
       );
