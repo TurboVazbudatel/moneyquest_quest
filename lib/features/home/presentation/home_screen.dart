@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
+import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
+import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
 import 'package:moneyquest_quest/core/services/greet_flag.dart';
 import 'package:moneyquest_quest/data/services/profile_service.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
