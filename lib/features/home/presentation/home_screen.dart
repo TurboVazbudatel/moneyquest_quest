@@ -96,6 +96,7 @@ _load();
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const AiriGreetingBanner(),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
