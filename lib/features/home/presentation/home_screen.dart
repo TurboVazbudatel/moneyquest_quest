@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../dev/presentation/airi_test_screen.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../../data/services/profile_service.dart';
 import '../../transactions/presentation/add_tx_sheet.dart';
@@ -34,6 +35,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final greet = _name?.isNotEmpty == true ? 'Привет, $_name!' : 'Привет!';
     return Scaffold(
+      bottomNavigationBar: const MqBottomBar(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       appBar: AppBar(
         title: const Text('MoneyQuest'),
         actions: [
