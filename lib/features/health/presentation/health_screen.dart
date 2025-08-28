@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/health/presentation/widgets/airi_advice_panel.dart';
 import '../../../data/services/budgets_service.dart';
 import 'widgets/health_trend_chart.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -68,6 +69,7 @@ class _HealthScreenState extends State<HealthScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+          const AiriAdvicePanel(),
                   Text('Финансовое здоровье', style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 12),
                   // Новый плавный график с градиентом в стиле референса

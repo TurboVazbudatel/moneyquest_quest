@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/data/services/battle_service.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../share/widgets/share_card.dart';
 import '../../../data/services/challenges_service.dart';
@@ -12,7 +13,7 @@ class BudgetBattleScreen extends StatefulWidget {
 }
 
 class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
-  final _svc = ChallengesService();
+  final _svc = BattleService();
 
   final _ctrl = TextEditingController(text: '500');
   Timer? _timer;
@@ -50,8 +51,8 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
     if (!mounted) return;
     setState(() {
       _status = st;
-      _limit = lim;
-      _spent = sp;
+      _limit = (lim).toDouble();
+      _spent = (sp).toDouble();
       _left = tl;
     });
   }
@@ -66,7 +67,7 @@ class _BudgetBattleScreenState extends State<BudgetBattleScreen> {
   Future<void> _start() async {
     final lim = double.tryParse(_ctrl.text.replaceAll(',', '.')) ?? 0;
     if (lim <= 0) return;
-    await _svc.startBattle(dailyLimit: lim, hours: 24);
+    await _svc.startBattle(dailyLimit: lim.toInt(), hours: 24);
     await _refresh();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
