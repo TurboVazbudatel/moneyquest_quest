@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../features/reports/presentation/reports_screen.dart';
-import '../features/budgets/presentation/budgets_screen.dart';
-import '../features/health/presentation/health_screen.dart';
+import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
+import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
+import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
 
-class MqBottomBar extends StatelessWidget {
-  const MqBottomBar({super.key});
+class MqBottomBarWidget extends StatelessWidget {
+  const MqBottomBarWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
