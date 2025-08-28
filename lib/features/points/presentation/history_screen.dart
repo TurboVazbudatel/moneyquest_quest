@@ -20,7 +20,7 @@ class HistoryScreen extends StatelessWidget {
           }
           return ListView.separated(
             itemCount: items.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (context, i) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final it = items[i];
               final ts = DateTime.tryParse('${it['ts']}');

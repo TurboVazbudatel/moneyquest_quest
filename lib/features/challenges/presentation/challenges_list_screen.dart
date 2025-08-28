@@ -47,7 +47,7 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
           return ListView.separated(
             padding: const EdgeInsets.all(12),
             itemCount: items.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (context, i) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final ch = items[i].$1;
               final done = items[i].$2;

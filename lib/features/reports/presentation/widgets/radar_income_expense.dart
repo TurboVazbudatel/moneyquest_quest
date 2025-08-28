@@ -108,7 +108,7 @@ class _RadarPainter extends CustomPainter {
     }
 
     // Значения -> радиусы по формуле r = r0 + v*rA (с минимальной амплитудой)
-    double _valueToRadius(double v) {
+    double valueToRadius(double v) {
       var vv = v.clamp(0.0, 1.0);
       if (!anyValue) {
   vv = vMin;
@@ -119,11 +119,11 @@ class _RadarPainter extends CustomPainter {
     }
 
     // Полярные точки (замкнутые — для кривой)
-    List<Offset> _points(double Function(String) src) {
+    List<Offset> points(double Function(String) src) {
       final pts = <Offset>[];
       for (int i = 0; i < axes.length; i++) {
         final a = _angle(i, axes.length);
-        final r = _valueToRadius(src(axes[i]));
+        final r = valueToRadius(src(axes[i]));
         pts.add(Offset(cx + r * math.cos(a), cy + r * math.sin(a)));
       }
       // замыкаем для Catmull–Rom
@@ -131,11 +131,11 @@ class _RadarPainter extends CustomPainter {
       return pts;
     }
 
-    final incomePts  = _points(getIncome);
-    final expensePts = _points(getExpense);
+    final incomePts  = points(getIncome);
+    final expensePts = points(getExpense);
 
     // Catmull–Rom замкнутая кривая (cubicTo)
-    Path _catmullRom(List<Offset> pts, {double tension = 0.5}) {
+    Path catmullRom(List<Offset> pts, {double tension = 0.5}) {
       // На входе: [..., p(n-1), p0, p1] (последние два — дубли для замыкания)
       final path = Path()..moveTo(pts[0].dx, pts[0].dy);
       for (int i = 1; i < pts.length - 2; i++) {
@@ -159,11 +159,11 @@ class _RadarPainter extends CustomPainter {
       return path;
     }
 
-    final incomePath  = _catmullRom(incomePts,  tension: 0.8);
-    final expensePath = _catmullRom(expensePts, tension: 0.8);
+    final incomePath  = catmullRom(incomePts,  tension: 0.8);
+    final expensePath = catmullRom(expensePts, tension: 0.8);
 
     // Линия + glow
-    void _strokeWithGlow(Path p, Color c) {
+    void strokeWithGlow(Path p, Color c) {
       final glow = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6
@@ -178,8 +178,8 @@ class _RadarPainter extends CustomPainter {
       canvas.drawPath(p, stroke);
     }
 
-    _strokeWithGlow(expensePath, expenseColor);
-    _strokeWithGlow(incomePath,  incomeColor);
+    strokeWithGlow(expensePath, expenseColor);
+    strokeWithGlow(incomePath,  incomeColor);
 
     // Подписи категорий по окружности (чуть ярче)
     final tp = TextPainter(textDirection: TextDirection.ltr, maxLines: 1);
