@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../onboarding/presentation/onboarding_screen.dart';
+import 'package:moneyquest_quest/core/services/first_run_service.dart';
 import '../../../data/services/profile_service.dart';
 import '../../transactions/presentation/add_tx_sheet.dart';
 import '../../transactions/presentation/transactions_screen.dart';
@@ -14,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _firstRun = FirstRunService();
   final _profile = ProfileService();
   String? _name;
 
@@ -151,3 +154,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+  Future<void> _showOnboardingIfNeeded() async {
+    final need = await _firstRun.needOnboarding();
+    if (!mounted || !need) return;
+    await _firstRun.markSeen();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingScreen()));
+    });
+  }
