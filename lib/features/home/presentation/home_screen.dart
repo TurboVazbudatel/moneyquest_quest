@@ -1,10 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:moneyquest_quest/core/services/first_run_service.dart';
-import 'package:moneyquest_quest/features/dev/presentation/airi_test_screen.dart';
-import 'package:moneyquest_quest/features/challenges/presentation/challenges_screen.dart';
-import 'package:moneyquest_quest/widgets/mq_bottom_bar.dart';
-import '../../dev/presentation/airi_test_screen.dart';
-import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../../data/services/profile_service.dart';
 import '../../transactions/presentation/add_tx_sheet.dart';
 import '../../transactions/presentation/transactions_screen.dart';
@@ -39,8 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final greet = _name?.isNotEmpty == true ? 'Привет, $_name!' : 'Привет!';
     return Scaffold(
-      bottomNavigationBar: const MqBottomBarWidget(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       appBar: AppBar(
         title: const Text('MoneyQuest'),
         actions: [
