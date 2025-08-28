@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/challenges/presentation/challenges_list_screen.dart';
 import 'package:moneyquest_quest/features/points/presentation/history_screen.dart';
 import 'package:moneyquest_quest/data/services/points_service.dart';
 import 'package:moneyquest_quest/features/settings/presentation/settings_screen.dart';
@@ -9,7 +10,6 @@ import 'package:moneyquest_quest/features/battle/presentation/budget_battle_scre
 import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
 import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
-import 'package:moneyquest_quest/features/dev/presentation/airi_test_screen.dart';
 import 'package:moneyquest_quest/core/services/greet_flag.dart';
 import 'package:moneyquest_quest/data/services/profile_service.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
@@ -258,8 +258,7 @@ class _HomeBottomBar extends StatelessWidget {
                 }
               },
               itemBuilder: (context) => const [
-                PopupMenuItem(value: 'ch', child: Text('Челленджи')),
-                PopupMenuItem(value: 'complete', child: Text('Завершить челлендж (+50)')),
+                PopupMenuItem(value: 'ch', child: Text('Челленджи')),PopupMenuItem(value: 'complete', child: Text('Завершить челлендж (+50)')),
                 PopupMenuItem(value: 'settings', child: Text('Настройки')),
               
                   PopupMenuItem(value: 'history', child: Text('История баллов')),],
@@ -270,4 +269,3 @@ class _HomeBottomBar extends StatelessWidget {
     );
   }
 }
-
