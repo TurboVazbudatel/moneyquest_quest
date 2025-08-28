@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/achievements/presentation/achievements_screen.dart';
+import 'package:moneyquest_quest/features/leaderboard/presentation/leaderboard_screen.dart';
 import 'package:moneyquest_quest/features/battle/presentation/budget_battle_screen.dart';
 import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
 import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
 import 'package:moneyquest_quest/features/dev/presentation/airi_test_screen.dart';
-import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
-import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
-import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
 import 'package:moneyquest_quest/core/services/greet_flag.dart';
 import 'package:moneyquest_quest/data/services/profile_service.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
@@ -221,20 +220,25 @@ class _HomeBottomBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            IconButton(icon: const Icon(Icons.home_filled), onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst)),
-            IconButton(icon: const Icon(Icons.radar_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReportsScreen()))),
-            IconButton(icon: const Icon(Icons.account_balance_wallet_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetsScreen()))),
-            IconButton(icon: const Icon(Icons.favorite_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HealthScreen()))),
+            IconButton(icon: const Icon(Icons.home_filled),
+              onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst)),
+            IconButton(icon: const Icon(Icons.radar_rounded),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReportsScreen()))),
+            IconButton(icon: const Icon(Icons.account_balance_wallet_rounded),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetsScreen()))),
+            IconButton(icon: const Icon(Icons.emoji_events_rounded),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AchievementsScreen()))),
+            IconButton(icon: const Icon(Icons.leaderboard_rounded),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen()))),
+            IconButton(icon: const Icon(Icons.favorite_rounded),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HealthScreen()))),
             PopupMenuButton<String>(
               tooltip: 'Ещё',
               icon: const Icon(Icons.more_horiz_rounded),
               onSelected: (v) {
                 switch (v) {
                   case 'ch':
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => BudgetBattleScreen()));
-                    break;
-                  case 'airi':
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => BudgetBattleScreen()));
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetBattleScreen()));
                     break;
                   case 'settings':
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Настройки — скоро')));
@@ -243,7 +247,6 @@ class _HomeBottomBar extends StatelessWidget {
               },
               itemBuilder: (context) => const [
                 PopupMenuItem(value: 'ch', child: Text('Челленджи')),
-                PopupMenuItem(value: 'airi', child: Text('Челленджи')),
                 PopupMenuItem(value: 'settings', child: Text('Настройки')),
               ],
             ),
