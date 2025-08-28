@@ -268,9 +268,9 @@ class _HomeBottomBar extends StatelessWidget {
               },
               itemBuilder: (context) => const [
                 PopupMenuItem(value: 'ch', child: Text('Челленджи')),PopupMenuItem(value: 'complete', child: Text('Завершить челлендж (+50)')),
-                PopupMenuItem(value: 'subscribe', child: Text('Подписка Premium')),
-                PopupMenuItem(value: 'reports', child: Text('Premium отчёты')),
-                PopupMenuItem(value: 'settings', child: Text('Настройки')),
+                PopupMenuItem(value: 'subscribe', child: Row(children:[Icon(Icons.star), SizedBox(width:8), Text('Premium')])),
+                PopupMenuItem(value: 'reports', child: Row(children:[Icon(Icons.analytics), SizedBox(width:8), Text('Premium отчёты')])),
+                PopupMenuItem(value: 'settings', child: Row(children:[Icon(Icons.settings), SizedBox(width:8), Text('Настройки')])),
               
                   PopupMenuItem(value: 'history', child: Text('История баллов')),],
             ),
