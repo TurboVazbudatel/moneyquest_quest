@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/app/start_gate.dart';
 import 'features/transactions/presentation/transactions_screen.dart';
 import 'features/account/presentation/account_screen.dart';
 import 'package:firebase_core/firebase_core.dart';

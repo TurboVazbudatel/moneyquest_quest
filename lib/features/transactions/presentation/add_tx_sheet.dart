@@ -45,6 +45,7 @@ class _AddTxSheetState extends State<AddTxSheet> {
     final rec = await _svc.recentCategories(top: 3);
     if (!context.mounted) return;
     if (!context.mounted) return;
+    if (!context.mounted) return;
     if (!mounted) return;
     setState(() => _recentCats = rec);
   }

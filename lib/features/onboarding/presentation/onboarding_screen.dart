@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:moneyquest_quest/widgets/typing_text.dart';
 import 'package:moneyquest_quest/widgets/airi_emotion.dart';
+import 'package:moneyquest_quest/data/services/profile_service.dart';
 import 'package:moneyquest_quest/features/home/presentation/home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -12,9 +13,11 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   String _name = '';
 
-  void _finish() {
+  Future<void> _finish() async {
     if (!mounted) return;
     final nav = Navigator.of(context);
+    await ProfileService().setOnboarded(true);
+    if (_name.isNotEmpty) { await ProfileService().setName(_name); }
     if (nav.canPop()) {
       nav.pop();
     } else {
