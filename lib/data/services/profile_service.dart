@@ -1,42 +1,37 @@
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileService {
-  static const _boxName = 'profile_box';
-
-  Future<Box> _box() async {
-    if (!Hive.isBoxOpen(_boxName)) {
-      await Hive.openBox(_boxName);
-    }
-    return Hive.box(_boxName);
-  }
+  static const _kName = 'profile_name_v1';
+  static const _kGuest = 'profile_is_guest_v1';
+  static const _kOnboarded = 'profile_onboarded_v1';
 
   Future<void> setName(String name) async {
-    final box = await _box();
-    await box.put('name', name);
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kName, name);
   }
 
   Future<String?> getName() async {
-    final box = await _box();
-    return box.get('name') as String?;
+    final p = await SharedPreferences.getInstance();
+    return p.getString(_kName);
   }
 
-  Future<void> setOnboarded(bool v) async {
-    final box = await _box();
-    await box.put('onboarded', v);
-  }
-
-  Future<bool> isOnboarded() async {
-    final box = await _box();
-    return (box.get('onboarded') as bool?) ?? false;
-  }
-
-  Future<void> setGuest(bool v) async {
-    final box = await _box();
-    await box.put('guest', v);
+  Future<void> setGuest(bool value) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kGuest, value);
   }
 
   Future<bool> isGuest() async {
-    final box = await _box();
-    return (box.get('guest') as bool?) ?? false;
+    final p = await SharedPreferences.getInstance();
+    return p.getBool(_kGuest) ?? true;
+  }
+
+  Future<void> setOnboarded(bool value) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kOnboarded, value);
+  }
+
+  Future<bool> isOnboarded() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getBool(_kOnboarded) ?? false;
   }
 }

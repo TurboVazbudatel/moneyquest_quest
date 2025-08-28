@@ -10,9 +10,7 @@ class AiriGreetingBanner extends StatefulWidget {
 }
 
 class _AiriGreetingBannerState extends State<AiriGreetingBanner> {
-  final _profile = ProfileService();
   String _name = '';
-  bool _hidden = false;
 
   @override
   void initState() {
@@ -21,40 +19,28 @@ class _AiriGreetingBannerState extends State<AiriGreetingBanner> {
   }
 
   Future<void> _load() async {
-    final n = await _profile.getName();
+    final n = await ProfileService().getName();
     if (!mounted) return;
-    setState(() => _name = (n ?? '').trim());
+    setState(() {
+      _name = (n ?? '').trim();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_hidden) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final greet = _name.isEmpty ? 'Привет! Я Airi 💚' : 'Привет, $_name! Я Airi 💚';
-    return Container(
+    return Card(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          AiriEmotion(mood: AiriMood.wave, isFull: false, height: 72),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              '$greet\nГотов(а) улучшать финздоровье?',
-              style: theme.textTheme.bodyLarge,
-            ),
-          ),
-          IconButton(
-            onPressed: () => setState(() => _hidden = true),
-            icon: const Icon(Icons.close_rounded),
-            tooltip: 'Скрыть',
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const AiriEmotion(mood: AiriMood.wave, isFull: false, height: 72),
+            const SizedBox(width: 12),
+            Expanded(child: Text(greet, style: theme.textTheme.titleMedium)),
+          ],
+        ),
       ),
     );
   }
