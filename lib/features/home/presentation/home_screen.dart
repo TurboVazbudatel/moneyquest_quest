@@ -26,7 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+        _showOnboardingIfNeeded();
+_load();
   }
 
   Future<void> _load() async {
@@ -156,14 +157,16 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
-
   Future<void> _showOnboardingIfNeeded() async {
     final need = await _firstRun.needOnboarding();
     if (!mounted || !need) return;
     await _firstRun.markSeen();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingScreen()));
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
     });
   }
+
+}
