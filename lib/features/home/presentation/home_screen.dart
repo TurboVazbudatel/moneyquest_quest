@@ -3,7 +3,6 @@ import 'package:moneyquest_quest/core/services/greet_flag.dart';
 import 'package:moneyquest_quest/data/services/profile_service.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../../core/services/first_run_service.dart';
-import '../../onboarding/presentation/onboarding_screen.dart';
 import 'package:moneyquest_quest/core/services/first_run_service.dart';
 import '../../../data/services/profile_service.dart';
 import '../../transactions/presentation/add_tx_sheet.dart';
@@ -21,8 +20,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _greet = GreetFlag();
-  final _profile = ProfileService();
-  final _firstRun = FirstRunService();final _profile = ProfileService();
+final _profile = ProfileService();
+final _firstRun = FirstRunService();
   String? _name;
 
   @override
@@ -42,6 +41,8 @@ _load();
   Widget build(BuildContext context) {
     final greet = _name?.isNotEmpty == true ? 'Привет, $_name!' : 'Привет!';
     return Scaffold(
+      bottomNavigationBar: const _HomeBottomBar(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       appBar: AppBar(
         title: const Text('MoneyQuest'),
         actions: [
@@ -178,7 +179,7 @@ _load();
     await _greet.markGreeted();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final txt = name.trim().isEmpty ? 'Привет! Я Airi 💚' : 'Привет, %s! Я Airi 💚' % name.trim();
+      final txt = name.trim().isEmpty ? 'Привет! Я Airi 💚' : 'Привет, ' + name.trim() + '! Я Airi 💚';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
@@ -195,4 +196,29 @@ _load();
     });
   }
 
+}
+
+class _HomeBottomBar extends StatelessWidget {
+  const _HomeBottomBar({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      color: theme.colorScheme.surface,
+      elevation: 6,
+      child: SizedBox(
+        height: 72,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(icon: const Icon(Icons.home_filled), onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst)),
+            IconButton(icon: const Icon(Icons.radar_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReportsScreen()))),
+            IconButton(icon: const Icon(Icons.account_balance_wallet_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetsScreen()))),
+            IconButton(icon: const Icon(Icons.favorite_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HealthScreen()))),
+          ],
+        ),
+      ),
+    );
+  }
 }
