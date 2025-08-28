@@ -24,9 +24,27 @@ class TransactionsService {
     final List<Map<String, dynamic>> out = [];
     for (final key in box.keys) {
       final v = box.get(key);
-      if (v is Map) out.add({...v, 'key': key});
+      if (v is! Map) continue;
+      final typeStr = (v['type'] as String?) ?? '';
+      if (typeStr != 'income' && typeStr != 'expense') continue;
+      final amount = (v['amount'] as num?)?.toDouble();
+      if (amount == null) continue;
+      final category = (v['category'] as String?) ?? 'Другое';
+      final dateMs = (v['date'] as num?)?.toInt() ?? 0;
+      out.add({
+        'key': key,
+        'type': typeStr,
+        'amount': amount,
+        'category': category,
+        'date': dateMs,
+        if (v['note'] != null) 'note': v['note'],
+      });
     }
-    out.sort((a, b) => (b['date'] as int).compareTo(a['date'] as int));
+    out.sort((a, b) {
+      final ai = (a['date'] as int? ?? 0);
+      final bi = (b['date'] as int? ?? 0);
+      return bi.compareTo(ai);
+    });
     return out;
   }
 
@@ -94,15 +112,33 @@ class TransactionsService {
 
   Future<List<(DateTime, double)>> cumulativeByDay() async {
     final items = await all();
-    items.sort((a, b) => (a['date'] as int).compareTo(b['date'] as int));
+    items.sort((a, b) {
+      final ai = (a['date'] as int? ?? 0);
+      final bi = (b['date'] as int? ?? 0);
+      return ai.compareTo(bi);
+    });
     double sum = 0;
     final out = <(DateTime, double)>[];
     for (final e in items) {
-      final d = DateTime.fromMillisecondsSinceEpoch(e['date'] as int);
+      final ms = (e['date'] as int? ?? 0);
+      final d = DateTime.fromMillisecondsSinceEpoch(ms);
       final amt = (e['amount'] as num).toDouble();
       sum += (e['type'] == 'income') ? amt : -amt;
       out.add((DateTime(d.year, d.month, d.day), sum));
     }
     return out;
+  }
+
+  /// ==== Новое: топ-N категорий ====
+  Future<List<String>> recentCategories({int top = 3}) async {
+    final items = await all();
+    final Map<String, int> counts = {};
+    for (final e in items) {
+      final cat = (e['category'] as String?) ?? 'Другое';
+      counts[cat] = (counts[cat] ?? 0) + 1;
+    }
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.take(top).map((e) => e.key).toList();
   }
 }

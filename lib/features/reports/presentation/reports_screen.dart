@@ -15,16 +15,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
   final _svc = TransactionsService();
   Map<String, double> _income = {};
   Map<String, double> _expense = {};
-  late List<String> _axes;
+  late List<String> _axes; // порядок осей
   bool _loading = true;
   ReportPeriod _period = ReportPeriod.month;
 
   @override
   void initState() {
     super.initState();
-    _axes = [
+    // БАЗА: объединяем стандартные доходные и расходные категории
+    final axesSet = <String>{
+      ...TransactionsService.defaultIncomeCats,
       ...TransactionsService.defaultExpenseCats,
-    ];
+    };
+    _axes = axesSet.toList();
     _load();
   }
 
@@ -55,26 +58,33 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final inc = <String, double>{};
     final exp = <String, double>{};
 
+    // инициализируем нулями всё, что есть в _axes
     for (final c in _axes) {
       inc[c] = 0;
       exp[c] = 0;
     }
 
+    // собираем данные и ДОБАВЛЯЕМ НОВЫЕ КАТЕГОРИИ В ОСИ
     for (final e in items) {
-      final cat = (e['category'] as String?) ?? 'Другое';
-      final amt = (e['amount'] as num).toDouble();
+      final cat = (e['category'] as String?)?.trim();
+      if (cat == null || cat.isEmpty) continue;
+
+      final amt = (e['amount'] as num?)?.toDouble() ?? 0;
       final ms = (e['date'] as int?) ?? 0;
       final d = DateTime.fromMillisecondsSinceEpoch(ms);
-
       if (d.isBefore(range.start) || !d.isBefore(range.end)) continue;
 
-      final target = _axes.contains(cat) ? cat : 'Другое';
-      if (!_axes.contains(target)) _axes.add(target);
+      // динамически добавляем невиданные категории
+      if (!_axes.contains(cat)) {
+        _axes.add(cat);
+        inc[cat] = 0;
+        exp[cat] = 0;
+      }
 
-      if (e['type'] == 'income') {
-        inc[target] = (inc[target] ?? 0) + amt;
+      if ((e['type'] as String?) == 'income') {
+        inc[cat] = (inc[cat] ?? 0) + amt;
       } else {
-        exp[target] = (exp[target] ?? 0) + amt;
+        exp[cat] = (exp[cat] ?? 0) + amt;
       }
     }
 
@@ -90,10 +100,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Widget build(BuildContext context) {
     final legend = Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _LegendDot(color: const Color(0xFF32D74B), label: 'Доход'),
-        const SizedBox(width: 16),
-        _LegendDot(color: const Color(0xFFFF453A), label: 'Расход'),
+      children: const [
+        _LegendDot(color: Color(0xFF32D74B), label: 'Доход'),
+        SizedBox(width: 16),
+        _LegendDot(color: Color(0xFFFF6B6B), label: 'Расход'),
       ],
     );
 
@@ -110,12 +120,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Center(
                     child: SegmentedButton<ReportPeriod>(
                       segments: const [
-                        ButtonSegment(
-                            value: ReportPeriod.day, label: Text('Сегодня')),
-                        ButtonSegment(
-                            value: ReportPeriod.week, label: Text('Неделя')),
-                        ButtonSegment(
-                            value: ReportPeriod.month, label: Text('Месяц')),
+                        ButtonSegment(value: ReportPeriod.day, label: Text('Сегодня')),
+                        ButtonSegment(value: ReportPeriod.week, label: Text('Неделя')),
+                        ButtonSegment(value: ReportPeriod.month, label: Text('Месяц')),
                       ],
                       selected: {_period},
                       onSelectionChanged: (s) {
@@ -161,12 +168,13 @@ class _LegendDot extends StatelessWidget {
     return Row(
       children: [
         Container(
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(3),
-                border: Border.all(color: color))),
+          width: 14, height: 14,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(3),
+            border: Border.all(color: color),
+          ),
+        ),
         const SizedBox(width: 6),
         Text(label),
       ],

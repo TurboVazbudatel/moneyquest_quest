@@ -1,9 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Радар «Доход vs Расход» — гладкие волнистые линии + glow.
-/// Показывается даже при нулевых данных (есть минимальная амплитуда),
-/// чтобы диаграмма всегда была визуально заметной.
+/// Радар «Доход vs Расход» в виде двух круговых волн:
+/// r = r0 + value * rA, где r0=0.35R (база), rA=0.55R (амплитуда).
+/// Гладкая замкнутая кривая через Catmull–Rom + мягкий glow.
+/// Подписи категорий располагаем по окружности и делаем более заметными.
 class RadarIncomeExpense extends StatelessWidget {
   final Map<String, double> incomeByCat;
   final Map<String, double> expenseByCat;
@@ -29,7 +30,7 @@ class RadarIncomeExpense extends StatelessWidget {
       if (i > maxVal) maxVal = i;
       if (e > maxVal) maxVal = e;
     }
-    if (maxVal <= 0) maxVal = 1; // чтобы нормировка не делила на 0
+    if (maxVal <= 0) maxVal = 1;
 
     return AspectRatio(
       aspectRatio: 1,
@@ -61,19 +62,21 @@ class _RadarPainter extends CustomPainter {
     required this.anyValue,
   });
 
-  static const incomeColor = Color(0xFF32D74B);   // мягко-мятный зелёный
+  static const incomeColor = Color(0xFF32D74B);   // мягко-мятный
   static const expenseColor = Color(0xFFFF6B6B);  // мягко-красный
 
-  // Минимальный визуальный радиус (чтобы было видно при 0)
-  static const double _minVisual = 0.10; // 10% от R
+  // База и амплитуда для круговой волны
+  static const double r0Factor = 0.35; // 35% R — базовый круг
+  static const double rAmp    = 0.55;  // до +55% R — выпуклость
+  static const double vMin    = 0.05;  // минимальная видимость при нуле
 
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final R = math.min(cx, cy) * 0.86;
+    final R  = math.min(cx, cy) * 0.86;
 
-    // Сетка
+    // Сетка: внешнее кольцо + внутренние + лучи
     final outer = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
@@ -96,77 +99,85 @@ class _RadarPainter extends CustomPainter {
       canvas.drawLine(Offset(cx, cy), Offset(cx + R * math.cos(a), cy + R * math.sin(a)), spoke);
     }
 
-    // Значения -> точки (гарантируем минимум для видимости)
-    List<Offset> points(double Function(String) src) {
+    // Значения -> радиусы по формуле r = r0 + v*rA (с минимальной амплитудой)
+    double _valueToRadius(double v) {
+      var vv = v.clamp(0.0, 1.0);
+      if (!anyValue) vv = vMin;         // когда все нули — одинаковая тонкая волна
+      else           vv = math.max(vv, vMin);
+      final r0 = r0Factor * R;
+      return r0 + vv * (rAmp * R);
+    }
+
+    // Полярные точки (замкнутые — для кривой)
+    List<Offset> _points(double Function(String) src) {
       final pts = <Offset>[];
       for (int i = 0; i < axes.length; i++) {
         final a = _angle(i, axes.length);
-        var v = src(axes[i]).clamp(0.0, 1.0);
-        if (!anyValue) {
-          // когда все нули — даём лёгкую волну, чтобы было красиво
-          // базовая окружность + небольшая синусоида
-          v = _minVisual + 0.02 * math.sin(i * 2 * math.pi / axes.length);
-        } else if (v == 0.0) {
-          v = _minVisual;
-        } else if (v < _minVisual) {
-          v = _minVisual + v * (1 - _minVisual); // сохраняем пропорцию, но не даём исчезнуть
-        }
-        final r = v * R;
+        final r = _valueToRadius(src(axes[i]));
         pts.add(Offset(cx + r * math.cos(a), cy + r * math.sin(a)));
       }
-      pts.add(pts.first);
+      // замыкаем для Catmull–Rom
+      pts.addAll([pts[0], pts[1]]);
       return pts;
     }
 
-    final incomePts = points(getIncome);
-    final expensePts = points(getExpense);
+    final incomePts  = _points(getIncome);
+    final expensePts = _points(getExpense);
 
-    // Плавные кривые (квадратичные Безье)
-    Path smooth(List<Offset> pts) {
-      final path = Path();
-      if (pts.length < 3) return path;
-      path.moveTo(pts[0].dx, pts[0].dy);
-      for (int i = 1; i < pts.length - 1; i++) {
+    // Catmull–Rom замкнутая кривая (cubicTo)
+    Path _catmullRom(List<Offset> pts, {double tension = 0.5}) {
+      // На входе: [..., p(n-1), p0, p1] (последние два — дубли для замыкания)
+      final path = Path()..moveTo(pts[0].dx, pts[0].dy);
+      for (int i = 1; i < pts.length - 2; i++) {
         final p0 = pts[i - 1];
         final p1 = pts[i];
         final p2 = pts[i + 1];
-        final ctrl = Offset((p0.dx + p2.dx) / 2, (p0.dy + p2.dy) / 2);
-        path.quadraticBezierTo(ctrl.dx, ctrl.dy, p1.dx, p1.dy);
+        final p3 = pts[i + 2];
+
+        final t = tension;
+        final c1 = Offset(
+          p1.dx + (p2.dx - p0.dx) * t / 6,
+          p1.dy + (p2.dy - p0.dy) * t / 6,
+        );
+        final c2 = Offset(
+          p2.dx - (p3.dx - p1.dx) * t / 6,
+          p2.dy - (p3.dy - p1.dy) * t / 6,
+        );
+        path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, p2.dx, p2.dy);
       }
       path.close();
       return path;
     }
 
-    final incomePath = smooth(incomePts);
-    final expensePath = smooth(expensePts);
+    final incomePath  = _catmullRom(incomePts,  tension: 0.8);
+    final expensePath = _catmullRom(expensePts, tension: 0.8);
 
-    // Линия + свечение
-    void strokeWithGlow(Path path, Color c) {
+    // Линия + glow
+    void _strokeWithGlow(Path p, Color c) {
       final glow = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6
-        ..color = c.withValues(alpha: 0.25)
+        ..color = c.withValues(alpha: 0.30)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
       final stroke = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5
         ..strokeJoin = StrokeJoin.round
         ..color = c.withValues(alpha: 0.95);
-      canvas.drawPath(path, glow);
-      canvas.drawPath(path, stroke);
+      canvas.drawPath(p, glow);
+      canvas.drawPath(p, stroke);
     }
 
-    strokeWithGlow(expensePath, expenseColor);
-    strokeWithGlow(incomePath, incomeColor);
+    _strokeWithGlow(expensePath, expenseColor);
+    _strokeWithGlow(incomePath,  incomeColor);
 
-    // Подписи
+    // Подписи категорий по окружности (чуть ярче)
     final tp = TextPainter(textDirection: TextDirection.ltr, maxLines: 1);
     for (int i = 0; i < axes.length; i++) {
-      final a = _angle(i, axes.length);
-      final rr = R * 1.05;
-      final p = Offset(cx + rr * math.cos(a), cy + rr * math.sin(a));
-      tp.text = const TextSpan(style: TextStyle(fontSize: 11, color: Color(0x99FFFFFF)));
-      tp.text = TextSpan(text: axes[i], style: const TextStyle(fontSize: 11, color: Color(0x99FFFFFF)));
+      final a  = _angle(i, axes.length);
+      final rr = R * 1.06;
+      final p  = Offset(cx + rr * math.cos(a), cy + rr * math.sin(a));
+      tp.text  = TextSpan(text: axes[i], style: const TextStyle(fontSize: 12, color: Color(0xCCFFFFFF)));
       tp.layout();
       tp.paint(canvas, Offset(p.dx - tp.width / 2, p.dy - tp.height / 2));
     }

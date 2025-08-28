@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/challenges/presentation/challenges_screen.dart';
 import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
 import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
-import 'package:moneyquest_quest/features/challenges/presentation/challenges_screen.dart';
 import 'package:moneyquest_quest/features/dev/presentation/airi_test_screen.dart';
 import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
@@ -234,7 +234,7 @@ class _HomeBottomBar extends StatelessWidget {
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChallengesScreen()));
                     break;
                   case 'airi':
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AiriTestScreen()));
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChallengesScreen()));
                     break;
                   case 'settings':
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Настройки — скоро')));
@@ -243,7 +243,7 @@ class _HomeBottomBar extends StatelessWidget {
               },
               itemBuilder: (context) => const [
                 PopupMenuItem(value: 'ch', child: Text('Челленджи')),
-                PopupMenuItem(value: 'airi', child: Text('Airi Test')),
+                PopupMenuItem(value: 'airi', child: Text('Челленджи')),
                 PopupMenuItem(value: 'settings', child: Text('Настройки')),
               ],
             ),
