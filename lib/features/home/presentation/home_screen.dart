@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:moneyquest_quest/features/challenges/presentation/challenges_screen.dart';
+import 'package:moneyquest_quest/features/battle/presentation/budget_battle_screen.dart';
 import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
 import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
@@ -231,10 +231,10 @@ class _HomeBottomBar extends StatelessWidget {
               onSelected: (v) {
                 switch (v) {
                   case 'ch':
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChallengesScreen()));
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => BudgetBattleScreen()));
                     break;
                   case 'airi':
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChallengesScreen()));
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => BudgetBattleScreen()));
                     break;
                   case 'settings':
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Настройки — скоро')));
