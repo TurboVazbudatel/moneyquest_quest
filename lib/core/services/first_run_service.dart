@@ -1,6 +1,11 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FirstRunService {
+  Future<void> reset() async {
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_kSeenOnboarding);
+  }
+
   static const _kSeenOnboarding = 'seen_onboarding_v1';
   Future<bool> needOnboarding() async {
     final p = await SharedPreferences.getInstance();
