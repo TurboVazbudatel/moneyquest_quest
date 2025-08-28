@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/widgets/typing_text.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/profile_service.dart';
@@ -104,7 +105,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 opacity: _fadeAiri,
                 child: SlideTransition(
                   position: _slideAiri,
-                  child: const AiriEmotion(mood: AiriMood.wave, isFull: false, height: 180),
+                  child: TweenAnimationBuilder<double>(duration: const Duration(milliseconds: 600), tween: Tween(begin: 0.0, end: 1.0), builder: (context, v, child) => Opacity(opacity: v, child: child), child: const AiriEmotion(mood: AiriMood.wave, isFull: false, height: 180)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -112,7 +113,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 opacity: _fadeText,
                 child: Column(
                   children: [
-                    Text('Привет! Меня зовут Airi, а тебя?', style: theme.textTheme.headlineSmall),
+                    TypingText(text: 'Привет! Меня зовут Airi, а тебя?', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     Text(
                       'Я помогу подружиться с бюджетом и сделать финансы понятными.',
