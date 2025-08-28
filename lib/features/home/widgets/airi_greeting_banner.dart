@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moneyquest_quest/data/services/profile_service.dart';
 import 'package:moneyquest_quest/widgets/airi_emotion.dart';
-import 'package:moneyquest_quest/widgets/airi_assets.dart';
 
 class AiriGreetingBanner extends StatefulWidget {
   const AiriGreetingBanner({super.key});
@@ -42,7 +41,7 @@ class _AiriGreetingBannerState extends State<AiriGreetingBanner> {
       ),
       child: Row(
         children: [
-          const AiriEmotion(mood: AiriMood.wave, isFull: false, height: 72),
+          AiriEmotion(mood: AiriMood.wave, isFull: false, height: 72),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

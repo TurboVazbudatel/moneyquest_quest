@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/auth/presentation/auth_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/premium_reports_screen.dart';
 import 'package:moneyquest_quest/features/subscription/presentation/subscription_screen.dart';
 import 'package:moneyquest_quest/features/points/presentation/history_screen.dart';
@@ -261,6 +262,9 @@ class _HomeBottomBar extends StatelessWidget {
                   case 'reports':
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PremiumReportsScreen()));
                     break;
+                  case 'login':
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AuthScreen()));
+                    break;
                   case 'settings':
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
                     break;
@@ -269,6 +273,7 @@ class _HomeBottomBar extends StatelessWidget {
               itemBuilder: (context) => const [
                 PopupMenuItem(value: 'ch', child: Text('Челленджи')),PopupMenuItem(value: 'complete', child: Text('Завершить челлендж (+50)')),
                 PopupMenuItem(value: 'subscribe', child: Row(children:[Icon(Icons.star), SizedBox(width:8), Text('Premium')])),
+                PopupMenuItem(value: 'login', child: Row(children:[Icon(Icons.person), SizedBox(width:8), Text('Войти')])),
                 PopupMenuItem(value: 'reports', child: Row(children:[Icon(Icons.analytics), SizedBox(width:8), Text('Premium отчёты')])),
                 PopupMenuItem(value: 'settings', child: Row(children:[Icon(Icons.settings), SizedBox(width:8), Text('Настройки')])),
               

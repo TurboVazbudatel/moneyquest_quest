@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/airi_emotion.dart';
-import '../../../widgets/airi_assets.dart';
 
 class AiriTestScreen extends StatelessWidget {
   const AiriTestScreen({super.key});
