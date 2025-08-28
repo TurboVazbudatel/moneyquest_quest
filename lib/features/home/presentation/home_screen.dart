@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/core/services/greet_flag.dart';
+import 'package:moneyquest_quest/data/services/profile_service.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../../core/services/first_run_service.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
@@ -18,6 +20,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _greet = GreetFlag();
+  final _profile = ProfileService();
   final _firstRun = FirstRunService();final _profile = ProfileService();
   String? _name;
 
@@ -163,6 +167,30 @@ _load();
       if (!mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+    });
+  }
+
+  Future<void> _showGreetingIfNeeded() async {
+    final need = await _greet.needGreet();
+    if (!mounted || !need) return;
+    final name = (await _profile.getName()) ?? '';
+    await _greet.markGreeted();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final txt = name.trim().isEmpty ? 'Привет! Я Airi 💚' : 'Привет, %s! Я Airi 💚' % name.trim();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Row(
+            children: [
+              Image.asset('assets/airi/half/Airi_half_01_wave.png', height: 28),
+              const SizedBox(width: 12),
+              Expanded(child: Text(txt)),
+            ],
+          ),
+          duration: const Duration(seconds: 3),
+        ),
       );
     });
   }
