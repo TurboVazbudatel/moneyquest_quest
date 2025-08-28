@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moneyquest_quest/features/reports/presentation/premium_reports_screen.dart';
 import 'package:moneyquest_quest/features/subscription/presentation/subscription_screen.dart';
-import 'package:moneyquest_quest/features/challenges/presentation/challenges_list_screen.dart';
 import 'package:moneyquest_quest/features/points/presentation/history_screen.dart';
 import 'package:moneyquest_quest/data/services/points_service.dart';
 import 'package:moneyquest_quest/features/settings/presentation/settings_screen.dart';
@@ -40,7 +39,8 @@ final _firstRun = FirstRunService();
   @override
   void initState() {
     super.initState();
-        _showOnboardingIfNeeded();
+            _showGreetingIfNeeded();
+_showOnboardingIfNeeded();
 _load();
   }
 

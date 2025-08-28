@@ -1,4 +1,3 @@
-import 'dart:math';
 
 class FinanceSnapshotService {
   Future<List<(DateTime, double)>> cumulativeByDay({int days = 30}) async {
