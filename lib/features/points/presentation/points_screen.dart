@@ -20,8 +20,8 @@ class _PointsScreenState extends State<PointsScreen> {
   }
 
   Future<void> _load() async {
-    final t = await _svc.total();
-    final h = await _svc.history();
+    final t = await  _svc.total();
+    final h = await  _svc.history();
     setState(() {
       _total = t;
       _items = h;
@@ -29,7 +29,7 @@ class _PointsScreenState extends State<PointsScreen> {
   }
 
   Future<void> _claimTestQuest() async {
-    await _svc.addPoints(reason: 'Выполнен тестовый квест', amount: 10);
+    await _svc.addPoints(50, reason: 'Начисление');
     _load();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

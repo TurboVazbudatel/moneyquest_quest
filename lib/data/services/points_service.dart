@@ -1,48 +1,46 @@
-import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PointsService {
-  static const _boxName = 'points_box';
-
-  Future<Box> _box() async {
-    if (!Hive.isBoxOpen(_boxName)) {
-      await Hive.openBox(_boxName);
-    }
-    return Hive.box(_boxName);
-  }
+  static const _kTotal = 'points_v1_total';
+  static const _kHist  = 'points_v1_history';
 
   Future<int> total() async {
-    final box = await _box();
-    return (box.get('total') as int?) ?? 0;
+    final p = await SharedPreferences.getInstance();
+    return p.getInt(_kTotal) ?? 0;
   }
 
   Future<List<Map<String, dynamic>>> history() async {
-    final box = await _box();
-    final raw = (box.get('history') as List?) ?? const [];
-    // Приводим каждый элемент к Map<String, dynamic>
-    return raw.whereType<Map>().map((e) {
-      return Map<String, dynamic>.from(e);
-    }).toList();
+    final p = await SharedPreferences.getInstance();
+    final raw = p.getString(_kHist);
+    if (raw == null || raw.isEmpty) return <Map<String, dynamic>>[];
+    final List data = jsonDecode(raw);
+    return data.cast<Map>().map((e) => e.map((k, v) => MapEntry(k.toString(), v))).toList();
   }
 
-  Future<void> _saveHistory(List<Map<String, dynamic>> items) async {
-    final box = await _box();
-    await box.put('history', items);
-  }
+  Future<int> addPoints(int amount, {String? reason}) async {
+    final p = await SharedPreferences.getInstance();
+    final cur = p.getInt(_kTotal) ?? 0;
+    final next = (cur + amount).clamp(0, 1000000000);
+    await p.setInt(_kTotal, next);
 
-  /// Начислить баллы с причиной (reason) и количеством (amount)
-  Future<int> addPoints({required String reason, required int amount}) async {
-    final box = await _box();
-    final current = (box.get('total') as int?) ?? 0;
-    final next = current + amount;
-    await box.put('total', next);
-
-    final items = await history();
-    items.insert(0, {
-      'reason': reason,
+    final now = DateTime.now().toIso8601String();
+    final item = {
+      'ts': now,
+      'reason': reason ?? 'Челлендж',
       'amount': amount,
-      'ts': DateTime.now().millisecondsSinceEpoch,
-    });
-    await _saveHistory(items);
+      'total': next,
+    };
+    final hist = await history();
+    hist.insert(0, item);
+    final trimmed = hist.take(200).toList();
+    await p.setString(_kHist, jsonEncode(trimmed));
     return next;
+  }
+
+  Future<void> reset() async {
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_kTotal);
+    await p.remove(_kHist);
   }
 }

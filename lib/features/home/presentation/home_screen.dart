@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/points/presentation/history_screen.dart';
+import 'package:moneyquest_quest/data/services/points_service.dart';
 import 'package:moneyquest_quest/features/settings/presentation/settings_screen.dart';
 import 'package:moneyquest_quest/features/home/widgets/airi_greeting_banner.dart';
 import 'package:moneyquest_quest/features/achievements/presentation/achievements_screen.dart';
@@ -237,10 +239,18 @@ class _HomeBottomBar extends StatelessWidget {
             PopupMenuButton<String>(
               tooltip: 'Ещё',
               icon: const Icon(Icons.more_horiz_rounded),
-              onSelected: (v) {
+              onSelected: (v) async {
                 switch (v) {
                   case 'ch':
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetBattleScreen()));
+                    break;
+                  case 'complete': {
+                    final pts = await PointsService().addPoints(50, reason: 'Начисление');
+                    if (context.mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Завершено! +50 баллов · Всего: $pts'))); }
+                    break;
+                  }
+                  case 'history':
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HistoryScreen()));
                     break;
                   case 'settings':
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
@@ -249,8 +259,10 @@ class _HomeBottomBar extends StatelessWidget {
               },
               itemBuilder: (context) => const [
                 PopupMenuItem(value: 'ch', child: Text('Челленджи')),
+                PopupMenuItem(value: 'complete', child: Text('Завершить челлендж (+50)')),
                 PopupMenuItem(value: 'settings', child: Text('Настройки')),
-              ],
+              
+                  PopupMenuItem(value: 'history', child: Text('История баллов')),],
             ),
           ],
         ),
@@ -258,3 +270,4 @@ class _HomeBottomBar extends StatelessWidget {
     );
   }
 }
+
