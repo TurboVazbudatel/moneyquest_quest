@@ -11,28 +11,27 @@ class LaunchGate extends StatefulWidget {
 
 class _LaunchGateState extends State<LaunchGate> {
   final _first = FirstRunService();
-  bool? _need;
+
   @override
   void initState() {
     super.initState();
-    _first.needOnboarding().then((v) {
+    _showOnboardingIfNeeded();
+  }
+
+  Future<void> _showOnboardingIfNeeded() async {
+    final need = await _first.needOnboarding();
+    if (!mounted || need != true) return;
+    await _first.markSeen();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      setState(() => _need = v);
-      if (v == true) {
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          await _first.markSeen();
-        });
-      }
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
     });
   }
+
   @override
   Widget build(BuildContext context) {
-    if (_need == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    if (_need == true) {
-      return const OnboardingScreen();
-    }
     return const HomeScreen();
   }
 }
