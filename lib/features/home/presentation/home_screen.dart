@@ -18,9 +18,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _firstRun = FirstRunService();
-  final _firstRun = FirstRunService();
-  final _profile = ProfileService();
+  final _firstRun = FirstRunService();final _profile = ProfileService();
   String? _name;
 
   @override
