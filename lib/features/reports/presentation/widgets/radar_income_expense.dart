@@ -26,11 +26,19 @@ class RadarIncomeExpense extends StatelessWidget {
     for (final k in axes) {
       final i = (incomeByCat[k] ?? 0).toDouble();
       final e = (expenseByCat[k] ?? 0).toDouble();
-      if (i != 0 || e != 0) anyValue = true;
-      if (i > maxVal) maxVal = i;
-      if (e > maxVal) maxVal = e;
+      if (i != 0 || e != 0) {
+  anyValue = true;
+}
+      if (i > maxVal) {
+  maxVal = i;
+}
+      if (e > maxVal) {
+  maxVal = e;
+}
     }
-    if (maxVal <= 0) maxVal = 1;
+    if (maxVal <= 0) {
+  maxVal = 1;
+}
 
     return AspectRatio(
       aspectRatio: 1,
@@ -102,7 +110,9 @@ class _RadarPainter extends CustomPainter {
     // Значения -> радиусы по формуле r = r0 + v*rA (с минимальной амплитудой)
     double _valueToRadius(double v) {
       var vv = v.clamp(0.0, 1.0);
-      if (!anyValue) vv = vMin;         // когда все нули — одинаковая тонкая волна
+      if (!anyValue) {
+  vv = vMin;
+}         // когда все нули — одинаковая тонкая волна
       else           vv = math.max(vv, vMin);
       final r0 = r0Factor * R;
       return r0 + vv * (rAmp * R);

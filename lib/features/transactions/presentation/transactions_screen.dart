@@ -30,7 +30,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   Future<void> _load() async {
     final all = await _svc.all();
-    if (!mounted) return;
+    if (!mounted) {
+  return;
+}
     setState(() {
       _items = all;
     });
@@ -85,7 +87,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     double inc = 0, exp = 0;
     for (final e in list) {
       final a = (e['amount'] as num).toDouble();
-      if (e['type'] == 'income') inc += a; else exp += a;
+      if (e['type'] == 'income') {
+  inc += a;
+} else exp += a;
     }
 
     setState(() {
@@ -107,7 +111,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       ),
       builder: (_) => const AddTxSheet(),
     );
-    if (ok == true) await _load();
+    if (ok == true) {
+  await _load();
+}
   }
 
   Future<void> _edit(Map<String, dynamic> e) async {
@@ -120,7 +126,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       ),
       builder: (_) => AddTxSheet(initial: e, itemKey: e['key']),
     );
-    if (ok == true) await _load();
+    if (ok == true) {
+  await _load();
+}
   }
 
   Future<void> _repeat(Map<String, dynamic> e) async {
@@ -140,7 +148,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       ),
       builder: (_) => AddTxSheet(initial: init),
     );
-    if (ok == true) await _load();
+    if (ok == true) {
+  await _load();
+}
   }
 
   Future<void> _remove(dynamic key) async {
@@ -325,8 +335,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           '${e['note'] != null ? ' • ${e['note']}' : ''}'),
                       trailing: PopupMenuButton<String>(
                         onSelected: (v) {
-                          if (v == 'edit') _edit(e);
-                          if (v == 'repeat') _repeat(e);
+                          if (v == 'edit') {
+  _edit(e);
+}
+                          if (v == 'repeat') {
+  _repeat(e);
+}
                         },
                         itemBuilder: (ctx) => const [
                           PopupMenuItem(value: 'edit', child: Text('Редактировать')),

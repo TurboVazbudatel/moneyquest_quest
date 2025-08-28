@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:moneyquest_quest/data/services/battle_service.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../share/widgets/share_card.dart';
-import '../../../data/services/challenges_service.dart';
 
 class BudgetBattleScreen extends StatefulWidget {
   const BudgetBattleScreen({super.key});
