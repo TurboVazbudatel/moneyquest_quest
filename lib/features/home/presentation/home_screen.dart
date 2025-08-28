@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
 import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
+import 'package:moneyquest_quest/features/challenges/presentation/challenges_screen.dart';
+import 'package:moneyquest_quest/features/dev/presentation/airi_test_screen.dart';
+import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
+import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
+import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
 import 'package:moneyquest_quest/core/services/greet_flag.dart';
 import 'package:moneyquest_quest/data/services/profile_service.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
@@ -201,6 +206,7 @@ _load();
 
 }
 
+
 class _HomeBottomBar extends StatelessWidget {
   const _HomeBottomBar({super.key});
   @override
@@ -219,9 +225,32 @@ class _HomeBottomBar extends StatelessWidget {
             IconButton(icon: const Icon(Icons.radar_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReportsScreen()))),
             IconButton(icon: const Icon(Icons.account_balance_wallet_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetsScreen()))),
             IconButton(icon: const Icon(Icons.favorite_rounded), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HealthScreen()))),
+            PopupMenuButton<String>(
+              tooltip: 'Ещё',
+              icon: const Icon(Icons.more_horiz_rounded),
+              onSelected: (v) {
+                switch (v) {
+                  case 'ch':
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChallengesScreen()));
+                    break;
+                  case 'airi':
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AiriTestScreen()));
+                    break;
+                  case 'settings':
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Настройки — скоро')));
+                    break;
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'ch', child: Text('Челленджи')),
+                PopupMenuItem(value: 'airi', child: Text('Airi Test')),
+                PopupMenuItem(value: 'settings', child: Text('Настройки')),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 }
+
