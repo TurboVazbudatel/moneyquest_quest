@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/settings/presentation/settings_screen.dart';
 import 'package:moneyquest_quest/features/home/widgets/airi_greeting_banner.dart';
 import 'package:moneyquest_quest/features/achievements/presentation/achievements_screen.dart';
 import 'package:moneyquest_quest/features/leaderboard/presentation/leaderboard_screen.dart';
@@ -187,7 +188,7 @@ _load();
     await _greet.markGreeted();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final txt = name.trim().isEmpty ? 'Привет! Я Airi 💚' : 'Привет, ' + name.trim() + '! Я Airi 💚';
+      final txt = name.trim().isEmpty ? 'Привет! Я Airi 💚' : 'Привет, ${name.trim()}! Я Airi 💚';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
@@ -242,7 +243,7 @@ class _HomeBottomBar extends StatelessWidget {
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetBattleScreen()));
                     break;
                   case 'settings':
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Настройки — скоро')));
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
                     break;
                 }
               },
@@ -257,4 +258,3 @@ class _HomeBottomBar extends StatelessWidget {
     );
   }
 }
-

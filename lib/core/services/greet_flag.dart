@@ -1,6 +1,11 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GreetFlag {
+  Future<void> reset() async {
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_k);
+  }
+
   static const _k = 'greeted_v1';
   Future<bool> needGreet() async {
     final p = await SharedPreferences.getInstance();

@@ -36,9 +36,9 @@ class _AiriGreetingBannerState extends State<AiriGreetingBanner> {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withOpacity(0.9),
+        color: theme.colorScheme.surface.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
