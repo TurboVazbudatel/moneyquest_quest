@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:moneyquest_quest/features/reports/presentation/reports_screen.dart';
-import 'package:moneyquest_quest/features/budgets/presentation/budgets_screen.dart';
-import 'package:moneyquest_quest/features/health/presentation/health_screen.dart';
 import '../../../data/services/profile_service.dart';
 import '../../transactions/presentation/add_tx_sheet.dart';
 import '../../transactions/presentation/transactions_screen.dart';
@@ -150,54 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
         child: const Icon(Icons.add),
-      ),
-    );
-  }
-}
-
-class _HomeBottomBar extends StatelessWidget {
-  const _HomeBottomBar({super.key});
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      color: theme.colorScheme.surface,
-      elevation: 6,
-      child: SizedBox(
-        height: 64,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-              tooltip: 'Главная',
-              icon: const Icon(Icons.home_rounded),
-              onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
-            ),
-            IconButton(
-              tooltip: 'Диаграммы',
-              icon: const Icon(Icons.radar_rounded),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ReportsScreen()),
-              ),
-            ),
-            const SizedBox(width: 40),
-            IconButton(
-              tooltip: 'Бюджеты',
-              icon: const Icon(Icons.account_balance_wallet_rounded),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BudgetsScreen()),
-              ),
-            ),
-            IconButton(
-              tooltip: 'ФинЗдоровье',
-              icon: const Icon(Icons.favorite_rounded),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const HealthScreen()),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
