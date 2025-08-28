@@ -24,6 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -35,22 +36,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 TweenAnimationBuilder<double>(
                   duration: const Duration(milliseconds: 600),
                   tween: Tween(begin: 0.0, end: 1.0),
-                  builder: (context, v, child) => Opacity(opacity: v, child: child),
-                  child: const AiriEmotion(
-                    mood: AiriMood.wave,
-                    isFull: false,
-                    height: 180,
+                  builder: (context, v, _) => Opacity(
+                    opacity: v,
+                    child: AiriEmotion(
+                      mood: _name.isEmpty ? AiriMood.wave : AiriMood.happy,
+                      isFull: false,
+                      height: 180,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 _name.isEmpty
                     ? TypingText(
                         text: 'Привет! Меня зовут Airi, а тебя?',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: titleStyle,
                       )
                     : Text(
                         'Рада познакомиться, $_name!',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: titleStyle,
                       ),
                 const SizedBox(height: 16),
                 TextField(
