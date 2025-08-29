@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:moneyquest_quest/features/challenges/presentation/challenges_screen.dart';
+import 'package:moneyquest_quest/features/challenges/presentation/challenges_list_screen.dart';
 import 'package:moneyquest_quest/features/points/presentation/points_screen.dart';
 import 'package:moneyquest_quest/features/home/widgets/airi_tip_loader.dart';
 import 'package:moneyquest_quest/features/auth/presentation/auth_screen.dart';
@@ -259,7 +259,7 @@ class _HomeBottomBar extends StatelessWidget {
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AchievementsScreen()));
                     break;
                   case 'challenges':
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChallengesScreen()));
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChallengesListScreen()));
                     break;
                   case 'leaderboard':
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen()));

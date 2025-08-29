@@ -1,42 +1,83 @@
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:moneyquest_quest/data/services/points_service.dart';
+import 'points_service.dart';
+import 'package:moneyquest_quest/features/challenges/domain/challenge.dart';
 
-class Challenge {
-  final String id;
-  final String title;
-  final String subtitle;
-  final int points;
-  const Challenge(this.id, this.title, this.subtitle, this.points);
-}
+enum ChallengeStatus { idle, active, completed }
 
 class ChallengesService {
-  static const _kDone = 'challenges_v1_done';
+  static const _kActiveKey = 'ch_active_v1';
+  static const _kActiveLimit = 'ch_active_limit_v1';
+  static const _kActiveStartedAt = 'ch_active_started_v1';
+  static const _kCompletedPrefix = 'ch_done_';
 
-  static const List<Challenge> all = [
-    Challenge('save_500_week', 'Сохрани 500 ₽ за неделю', 'Отложи по 70–80 ₽ в день', 50),
-    Challenge('no_coffee_3d', 'Без кофе на вынос (3 дня)', 'Экономим на импульсных тратах', 30),
-    Challenge('track_7d', 'Веди учёт 7 дней', 'Заносить доходы/траты ежедневно', 70),
-    Challenge('cook_home', 'Готовим дома 3 дня', 'Без доставки', 40),
-    Challenge('walk_free', 'Бесплатный досуг', 'День без покупок', 25),
+  final List<Challenge> _all = const [
+    Challenge(
+      key: 'first_tx',
+      title: 'Первая транзакция',
+      description: 'Добавь первую запись и получи награду',
+      reward: 50,
+    ),
+    Challenge(
+      key: 'first_budget',
+      title: 'Первый бюджет',
+      description: 'Создай бюджет и получи награду',
+      reward: 100,
+    ),
+    Challenge(
+      key: 'limit_week',
+      title: 'Лимит на неделю',
+      description: 'Потрать меньше лимита за 7 дней',
+      reward: 150,
+    ),
   ];
 
-  Future<Set<String>> _done() async {
+  List<Challenge> get all => _all;
+
+  Future<ChallengeStatus> status(String key) async {
     final p = await SharedPreferences.getInstance();
-    final raw = p.getString(_kDone);
-    if (raw == null) return <String>{};
-    return (jsonDecode(raw) as List).cast<String>().toSet();
+    if (p.getBool('$_kCompletedPrefix$key') ?? false) return ChallengeStatus.completed;
+    final active = p.getString(_kActiveKey);
+    if (active == key) return ChallengeStatus.active;
+    return ChallengeStatus.idle;
+  }
+
+  Future<void> startLimitWeek({required int rubLimit}) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kActiveKey, 'limit_week');
+    await p.setInt(_kActiveLimit, rubLimit);
+    await p.setString(_kActiveStartedAt, DateTime.now().toIso8601String());
+  }
+
+  Future<int?> activeLimit() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getInt(_kActiveLimit);
+  }
+
+  Future<DateTime?> activeStartedAt() async {
+    final p = await SharedPreferences.getInstance();
+    final s = p.getString(_kActiveStartedAt);
+    if (s == null) return null;
+    return DateTime.tryParse(s);
+  }
+
+  Future<void> resetActive() async {
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_kActiveKey);
+    await p.remove(_kActiveLimit);
+    await p.remove(_kActiveStartedAt);
+  }
+
+  Future<bool> isCompleted(String key) async {
+    final p = await SharedPreferences.getInstance();
+    return p.getBool('$_kCompletedPrefix$key') ?? false;
+  }
+
+  Future<void> complete(String key, {int reward = 100}) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setBool('$_kCompletedPrefix$key', true);
+    await PointsService().awardOnce('$_kCompletedPrefix$key', reward, reason: 'Челлендж: $key');
+    if ((p.getString(_kActiveKey) ?? '') == key) {
+      await resetActive();
     }
-
-  Future<bool> isCompleted(String id) async => (await _done()).contains(id);
-
-  Future<void> complete(String id, {String? reason}) async {
-    final p = await SharedPreferences.getInstance();
-    final d = await _done();
-    if (d.contains(id)) return;
-    d.add(id);
-    await p.setString(_kDone, jsonEncode(d.toList()));
-    final ch = all.firstWhere((e) => e.id == id, orElse: () => const Challenge('custom','Челлендж','',10));
-    await PointsService().addPoints(ch.points, reason: reason ?? ch.title);
   }
 }
