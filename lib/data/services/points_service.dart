@@ -17,7 +17,10 @@ class PointsService {
     final what = p.getStringList(_kHistoryWhat) ?? const [];
     final out = <Map<String, dynamic>>[];
     for (var i = 0; i < when.length && i < what.length; i++) {
-      out.add({'when': DateTime.tryParse(when[i]) ?? DateTime.now(), 'what': what[i]});
+      out.add({
+        'when': DateTime.tryParse(when[i]) ?? DateTime.now(),
+        'what': what[i],
+      });
     }
     return out.reversed.toList();
   }
@@ -27,10 +30,12 @@ class PointsService {
     final cur = p.getInt(_kTotal) ?? 0;
     final next = cur + amount;
     await p.setInt(_kTotal, next);
+
     final when = p.getStringList(_kHistoryWhen) ?? <String>[];
     final what = p.getStringList(_kHistoryWhat) ?? <String>[];
     when.add(DateTime.now().toIso8601String());
     what.add('+$amount: $reason');
+
     await p.setStringList(_kHistoryWhen, when);
     await p.setStringList(_kHistoryWhat, what);
     return next;
@@ -46,5 +51,35 @@ class PointsService {
     final s = (p.getStringList(_kClaimed) ?? const <String>[]).toSet();
     s.add(key);
     await p.setStringList(_kClaimed, s.toList());
+  }
+
+  Future<bool> isClaimed(String key) async {
+    final s = await claimed();
+    return s.contains(key);
+  }
+
+  Future<int> awardOnce(String key, int amount, {required String reason}) async {
+    if (await isClaimed(key)) {
+      return await total();
+    }
+    final t = await addPoints(amount, reason: reason);
+    await markClaimed(key);
+    return t;
+  }
+
+  Future<int> spendPoints(int amount, {required String reason}) async {
+    final p = await SharedPreferences.getInstance();
+    final cur = p.getInt(_kTotal) ?? 0;
+    final next = (cur - amount).clamp(0, 1 << 31);
+    await p.setInt(_kTotal, next);
+
+    final when = p.getStringList(_kHistoryWhen) ?? <String>[];
+    final what = p.getStringList(_kHistoryWhat) ?? <String>[];
+    when.add(DateTime.now().toIso8601String());
+    what.add('-$amount: $reason');
+
+    await p.setStringList(_kHistoryWhen, when);
+    await p.setStringList(_kHistoryWhat, what);
+    return next;
   }
 }

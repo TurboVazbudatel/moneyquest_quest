@@ -57,7 +57,6 @@ _load();
 
   @override
   Widget build(BuildContext context) {
-    final greet = _name?.isNotEmpty == true ? 'Привет, $_name!' : 'Привет!';
     return Scaffold(
       bottomNavigationBar: const _HomeBottomBar(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
