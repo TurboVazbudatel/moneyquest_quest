@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:moneyquest_quest/widgets/typing_text.dart';
-import 'package:moneyquest_quest/widgets/airi_emotion.dart';
-import 'package:moneyquest_quest/data/services/profile_service.dart';
 import 'package:moneyquest_quest/features/home/presentation/home_screen.dart';
+import 'package:moneyquest_quest/data/services/profile_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,7 +16,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
     final nav = Navigator.of(context);
     await ProfileService().setOnboarded(true);
-    if (_name.isNotEmpty) { await ProfileService().setName(_name); }
+    if (_name.isNotEmpty) {
+      await ProfileService().setName(_name);
+    }
     if (nav.canPop()) {
       nav.pop();
     } else {
@@ -36,17 +37,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 600),
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  builder: (context, v, _) => Opacity(
-                    opacity: v,
-                    child: AiriEmotion(
-                      mood: _name.isEmpty ? AiriMood.wave : AiriMood.happy,
-                      isFull: false,
-                      height: 180,
-                    ),
-                  ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 450),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: _name.isEmpty
+                      ? SizedBox(
+                          key: const ValueKey('airi_wave_full'),
+                          height: 280,
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Image.asset(
+                              'assets/airi/full/airi_full_wave.png',
+                              filterQuality: FilterQuality.high,
+                              gaplessPlayback: true,
+                            ),
+                          ),
+                        )
+                      : SizedBox(
+                          key: const ValueKey('airi_happy_full'),
+                          height: 280,
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Image.asset(
+                              'assets/airi/full/Airi_full_03_happy.png',
+                              filterQuality: FilterQuality.high,
+                              gaplessPlayback: true,
+                            ),
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 16),
                 _name.isEmpty
