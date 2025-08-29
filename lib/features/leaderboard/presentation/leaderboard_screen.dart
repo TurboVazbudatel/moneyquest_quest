@@ -1,38 +1,47 @@
 import 'package:flutter/material.dart';
-import 'package:moneyquest_quest/data/services/points_service.dart';
 
 class LeaderboardScreen extends StatelessWidget {
   const LeaderboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final svc = PointsService();
+    final theme = Theme.of(context);
+    final rows = const [
+      ('Вы', 1240),
+      ('Иван', 1180),
+      ('Мария', 990),
+      ('Алексей', 870),
+      ('Наталья', 820),
+    ];
+
     return Scaffold(
       appBar: AppBar(title: const Text('Лидерборд')),
-      body: FutureBuilder<int>(
-        future: svc.total(),
-        builder: (context, snap) {
-          final pts = snap.data ?? 0;
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              ListTile(
-                leading: const CircleAvatar(child: Text('1')),
-                title: const Text('Ты'),
-                trailing: Text('$pts баллов'),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: rows.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, i) {
+          final r = rows[i];
+          final you = i == 0;
+          return Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0,4),
+                )
+              ],
+            ),
+            child: ListTile(
+              leading: CircleAvatar(
+                child: Text('${i+1}'),
               ),
-              const Divider(),
-              const ListTile(
-                leading: CircleAvatar(child: Text('2')),
-                title: Text('Alex'),
-                trailing: Text('1200'),
-              ),
-              const ListTile(
-                leading: CircleAvatar(child: Text('3')),
-                title: Text('Mia'),
-                trailing: Text('980'),
-              ),
-            ],
+              title: Text(r.$1, style: you ? theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700) : null),
+              trailing: Text('${r.$2} баллов', style: theme.textTheme.bodyLarge),
+            ),
           );
         },
       ),
