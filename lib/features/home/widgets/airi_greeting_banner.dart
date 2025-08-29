@@ -1,62 +1,116 @@
 import 'package:flutter/material.dart';
-import 'package:moneyquest_quest/data/services/profile_service.dart';
-import 'package:moneyquest_quest/widgets/airi_emotion.dart';
+import 'package:moneyquest_quest/widgets/airi_assets.dart';
 
-class AiriGreetingBanner extends StatefulWidget {
-  const AiriGreetingBanner({super.key});
+class AiriGreetingBanner extends StatelessWidget {
+  final String name;
+  final AiriMood mood;
 
-  @override
-  State<AiriGreetingBanner> createState() => _AiriGreetingBannerState();
-}
-
-class _AiriGreetingBannerState extends State<AiriGreetingBanner> {
-  String _name = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final n = await ProfileService().getName();
-    if (!mounted) return;
-    setState(() {
-      _name = (n ?? '').trim();
-    });
-  }
-
-  (String, AiriMood) _greetingForNow() {
-    final h = DateTime.now().hour;
-    if (h >= 5 && h <= 11) {
-      return ('Доброе утро', AiriMood.inspire);
-    } else if (h >= 12 && h <= 17) {
-      return ('Добрый день', AiriMood.happy);
-    } else if (h >= 18 && h <= 22) {
-      return ('Добрый вечер', AiriMood.think);
-    } else {
-      return ('Доброй ночи', AiriMood.shy);
-    }
-  }
+  const AiriGreetingBanner({
+    super.key,
+    this.name = '',
+    this.mood = AiriMood.wave,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final g = _greetingForNow();
-    final title = _name.isEmpty ? '${g.$1}! Я Airi' : '${g.$1}, $_name! Я Airi';
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            AiriEmotion(mood: g.$2, isFull: false, height: 72),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(title, style: theme.textTheme.titleMedium),
-            ),
+    final cs = theme.colorScheme;
+
+    // Используем по-поясной ассет, чтобы ничего не обрезалось
+    final imgPath = AiriAssets.half[mood] ?? AiriAssets.half[AiriMood.wave]!;
+
+    final greeting = name.isEmpty ? 'Привет! Я Airi' : 'Добрый день, $name! Я Airi';
+    const sub = 'Рада помочь с бюджетом ✨';
+
+    return Container(
+      decoration: BoxDecoration(
+        // мягкий градиент + скругления
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cs.surfaceVariant.withValues(alpha: 0.70),
+            cs.surfaceVariant.withValues(alpha: 0.45),
           ],
         ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // «Аватар» Airi по пояс с лёгким свечением
+          SizedBox(
+            width: 92,
+            height: 92,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // мягкое свечение позади
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: cs.primary.withValues(alpha: 0.12),
+                          blurRadius: 24,
+                          spreadRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // сама Airi — чуть «выползает» вверх, чтобы не резало голову
+                Positioned(
+                  left: -6,
+                  top: -10,
+                  child: Image.asset(
+                    imgPath,
+                    width: 108,
+                    filterQuality: FilterQuality.high,
+                    gaplessPlayback: true,
+                    alignment: Alignment.topLeft,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Текст
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  greeting,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  sub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

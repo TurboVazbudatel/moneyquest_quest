@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/home/widgets/airi_tip_loader.dart';
 import 'package:moneyquest_quest/features/auth/presentation/auth_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/premium_reports_screen.dart';
 import 'package:moneyquest_quest/features/subscription/presentation/subscription_screen.dart';
@@ -32,6 +33,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
   final _greet = GreetFlag();
 final _profile = ProfileService();
 final _firstRun = FirstRunService();
@@ -98,24 +100,8 @@ _load();
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const AiriTipLoader(),
           const AiriGreetingBanner(),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const CircleAvatar(radius: 24, child: Text('A')),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '$greet Я Airi. Давай посмотрим твой бюджет сегодня ✨',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
           const SizedBox(height: 12),
           Card(
             child: ListTile(
