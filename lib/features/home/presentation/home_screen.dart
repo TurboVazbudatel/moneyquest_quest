@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/features/challenges/presentation/challenges_screen.dart';
+import 'package:moneyquest_quest/features/points/presentation/points_screen.dart';
 import 'package:moneyquest_quest/features/home/widgets/airi_tip_loader.dart';
 import 'package:moneyquest_quest/features/auth/presentation/auth_screen.dart';
 import 'package:moneyquest_quest/features/reports/presentation/premium_reports_screen.dart';
@@ -251,8 +253,14 @@ class _HomeBottomBar extends StatelessWidget {
                   case 'login':
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AuthScreen()));
                     break;
+                  case 'points':
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PointsScreen()));
+                    break;
                   case 'achievements':
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AchievementsScreen()));
+                    break;
+                  case 'challenges':
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChallengesScreen()));
                     break;
                   case 'leaderboard':
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
@@ -267,7 +275,9 @@ class _HomeBottomBar extends StatelessWidget {
                 PopupMenuItem(value: 'subscribe', child: Row(children:[Icon(Icons.star), SizedBox(width:8), Text('Premium')])),
                 PopupMenuItem(value: 'login', child: Row(children:[Icon(Icons.person), SizedBox(width:8), Text('Войти')])),
                 PopupMenuItem(value: 'reports', child: Row(children:[Icon(Icons.analytics), SizedBox(width:8), Text('Premium отчёты')])),
+                PopupMenuItem(value: 'points', child: Row(children:[Icon(Icons.stars_rounded), SizedBox(width:8), Text('Баллы Airi')])),
                 PopupMenuItem(value: 'achievements', child: Row(children:[Icon(Icons.emoji_events_outlined), SizedBox(width:8), Text('Достижения')])),
+                PopupMenuItem(value: 'challenges', child: Row(children:[Icon(Icons.flag_outlined), SizedBox(width:8), Text('Челленджи')])),
                 PopupMenuItem(value: 'leaderboard', child: Row(children:[Icon(Icons.emoji_events), SizedBox(width:8), Text('Лидерборд')])),
                 PopupMenuItem(value: 'settings', child: Row(children:[Icon(Icons.settings), SizedBox(width:8), Text('Настройки')])),
               

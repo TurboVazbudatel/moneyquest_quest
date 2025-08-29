@@ -1,9 +1,10 @@
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PointsService {
-  static const _kTotal = 'points_v1_total';
-  static const _kHist  = 'points_v1_history';
+  static const _kTotal = 'points_total_v1';
+  static const _kHistoryWhen = 'points_hist_when_v1';
+  static const _kHistoryWhat = 'points_hist_what_v1';
+  static const _kClaimed = 'points_claimed_keys_v1';
 
   Future<int> total() async {
     final p = await SharedPreferences.getInstance();
@@ -12,35 +13,38 @@ class PointsService {
 
   Future<List<Map<String, dynamic>>> history() async {
     final p = await SharedPreferences.getInstance();
-    final raw = p.getString(_kHist);
-    if (raw == null || raw.isEmpty) return <Map<String, dynamic>>[];
-    final List data = jsonDecode(raw);
-    return data.cast<Map>().map((e) => e.map((k, v) => MapEntry(k.toString(), v))).toList();
+    final when = p.getStringList(_kHistoryWhen) ?? const [];
+    final what = p.getStringList(_kHistoryWhat) ?? const [];
+    final out = <Map<String, dynamic>>[];
+    for (var i = 0; i < when.length && i < what.length; i++) {
+      out.add({'when': DateTime.tryParse(when[i]) ?? DateTime.now(), 'what': what[i]});
+    }
+    return out.reversed.toList();
   }
 
-  Future<int> addPoints(int amount, {String? reason}) async {
+  Future<int> addPoints(int amount, {required String reason}) async {
     final p = await SharedPreferences.getInstance();
     final cur = p.getInt(_kTotal) ?? 0;
-    final next = (cur + amount).clamp(0, 1000000000);
+    final next = cur + amount;
     await p.setInt(_kTotal, next);
-
-    final now = DateTime.now().toIso8601String();
-    final item = {
-      'ts': now,
-      'reason': reason ?? 'Челлендж',
-      'amount': amount,
-      'total': next,
-    };
-    final hist = await history();
-    hist.insert(0, item);
-    final trimmed = hist.take(200).toList();
-    await p.setString(_kHist, jsonEncode(trimmed));
+    final when = p.getStringList(_kHistoryWhen) ?? <String>[];
+    final what = p.getStringList(_kHistoryWhat) ?? <String>[];
+    when.add(DateTime.now().toIso8601String());
+    what.add('+$amount: $reason');
+    await p.setStringList(_kHistoryWhen, when);
+    await p.setStringList(_kHistoryWhat, what);
     return next;
   }
 
-  Future<void> reset() async {
+  Future<Set<String>> claimed() async {
     final p = await SharedPreferences.getInstance();
-    await p.remove(_kTotal);
-    await p.remove(_kHist);
+    return (p.getStringList(_kClaimed) ?? const <String>[]).toSet();
+  }
+
+  Future<void> markClaimed(String key) async {
+    final p = await SharedPreferences.getInstance();
+    final s = (p.getStringList(_kClaimed) ?? const <String>[]).toSet();
+    s.add(key);
+    await p.setStringList(_kClaimed, s.toList());
   }
 }
