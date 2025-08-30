@@ -103,7 +103,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.04), blurRadius: 10, offset: const Offset(0,4))],
+        boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0,4))],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
