@@ -31,7 +31,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
     });
 
     if (_goal > 0 && _progress >= _goal) {
-      await _ach.unlock('goal_reached');
+      await _ach.unlock('goal_reached', 120, 'Цель достигнута');
     }
   }
 

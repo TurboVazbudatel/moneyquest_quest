@@ -1,63 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:moneyquest_quest/data/services/achievements_service.dart';
 
-class AchievementsScreen extends StatelessWidget {
+class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
+  @override
+  State<AchievementsScreen> createState() => _AchievementsScreenState();
+}
+
+class _AchievementsScreenState extends State<AchievementsScreen> {
+  final svc = AchievementsService();
+  late final items = svc.items;
+  Set<String> unlocked = {};
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    unlocked.clear();
+    for (final a in items) {
+      if (await svc.isUnlocked(a.key)) {
+        unlocked.add(a.key);
+      }
+    }
+    if (!mounted) return;
+    setState(() => loading = false);
+  }
+
+  Future<void> _claim(Achievement a) async {
+    await svc.unlock(a.key, a.reward, a.title);
+    await _load();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('+${a.reward} за «${a.title}»')));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final items = <_Ach>[
-      _Ach('Первый шаг', 'Добавь первую транзакцию', 50, true),
-      _Ach('Планировщик', 'Создай первый бюджет', 100, true),
-      _Ach('Контроль', 'Установи недельный лимит расходов', 120, false),
-      _Ach('Подушка', 'Накопи 10% от месячного дохода', 200, false),
-      _Ach('Аналитик', 'Посмотри отчёты за 7 дней подряд', 150, false),
-      _Ach('Челленджер', 'Заверши 3 челленджа подряд', 250, false),
-    ];
-
+    final th = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Достижения')),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, i) {
-          final a = items[i];
-          final color = a.unlocked ? theme.colorScheme.primaryContainer : theme.colorScheme.surface;
-          final onColor = a.unlocked ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurfaceVariant;
-          return Container(
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, i) {
+                final a = items[i];
+                final done = unlocked.contains(a.key);
+                final color = done ? th.colorScheme.primaryContainer : th.colorScheme.surface;
+                final on = done ? th.colorScheme.onPrimaryContainer : th.colorScheme.onSurface;
+                return Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: th.colorScheme.primary.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0,4))],
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    leading: CircleAvatar(
+                      backgroundColor: done ? th.colorScheme.primary : th.colorScheme.outlineVariant,
+                      child: Icon(done ? Icons.emoji_events : Icons.lock_outline, color: done ? th.colorScheme.onPrimary : th.colorScheme.onSurfaceVariant),
+                    ),
+                    title: Text(a.title, style: th.textTheme.titleMedium?.copyWith(color: on, fontWeight: FontWeight.w700)),
+                    subtitle: Text(a.desc, style: th.textTheme.bodyMedium?.copyWith(color: on)),
+                    trailing: done ? const Icon(Icons.check_circle, color: Colors.green) : FilledButton(onPressed: () => _claim(a), child: Text('+${a.reward}')),
+                  ),
+                );
+              },
             ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              leading: CircleAvatar(
-                backgroundColor: a.unlocked ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
-                child: Icon(a.unlocked ? Icons.check_rounded : Icons.lock_rounded, color: a.unlocked ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant),
-              ),
-              title: Text(a.title, style: theme.textTheme.titleMedium?.copyWith(color: onColor, fontWeight: FontWeight.w700)),
-              subtitle: Text(a.desc, style: theme.textTheme.bodyMedium?.copyWith(color: onColor)),
-              trailing: Text('+${a.points}', style: theme.textTheme.titleMedium?.copyWith(color: onColor)),
-            ),
-          );
-        },
-      ),
     );
   }
-}
-
-class _Ach {
-  final String title;
-  final String desc;
-  final int points;
-  final bool unlocked;
-  const _Ach(this.title, this.desc, this.points, this.unlocked);
 }

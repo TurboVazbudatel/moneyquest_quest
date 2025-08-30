@@ -35,6 +35,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _pointsTotal = 0;
+  Future<void> _loadPoints() async { final t = await PointsService().total(); if (!mounted) return; setState(() => _pointsTotal = t); }
 
   final _greet = GreetFlag();
 final _profile = ProfileService();
@@ -44,7 +46,8 @@ final _firstRun = FirstRunService();
   @override
   void initState() {
     super.initState();
-            _showGreetingIfNeeded();
+              _loadPoints();
+_showGreetingIfNeeded();
 _showOnboardingIfNeeded();
 _load();
   }
@@ -53,6 +56,12 @@ _load();
     final name = await _profile.getName();
     if (!mounted) return;
     setState(() => _name = name);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadPoints();
   }
 
   @override

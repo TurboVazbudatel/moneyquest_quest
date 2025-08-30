@@ -1,33 +1,32 @@
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'points_service.dart';
+
+class Achievement {
+  final String key;
+  final String title;
+  final String desc;
+  final int reward;
+  const Achievement(this.key, this.title, this.desc, this.reward);
+}
 
 class AchievementsService {
-  static const _boxName = 'achievements_box';
+  static const _kDonePrefix = 'ach_done_';
+  final List<Achievement> items = const [
+        Achievement('goal_reached', 'Цель достигнута', 'Достигни целевую сумму', 120),
+Achievement('first_tx', 'Первый шаг', 'Добавь первую транзакцию', 50),
+    Achievement('first_budget', 'Планировщик', 'Создай первый бюджет', 100),
+    Achievement('limit_week', 'Контроль', 'Заверши недельный лимит', 150),
+  ];
 
-  Future<Box> _box() async {
-    if (!Hive.isBoxOpen(_boxName)) {
-      await Hive.openBox(_boxName);
-    }
-    return Hive.box(_boxName);
+  Future<bool> isUnlocked(String key) async {
+    final p = await SharedPreferences.getInstance();
+    return p.getBool('$_kDonePrefix$key') ?? false;
   }
 
-  Future<List<String>> unlocked() async {
-    final box = await _box();
-    return (box.get('unlocked') as List?)?.cast<String>() ?? [];
-  }
-
-  Future<void> unlock(String id) async {
-    final box = await _box();
-    final current = (box.get('unlocked') as List?)?.cast<String>() ?? [];
-    if (!current.contains(id)) {
-      current.add(id);
-      await box.put('unlocked', current);
-    }
-  }
-
-  bool isUnlockedSync(String id) {
-    if (!Hive.isBoxOpen(_boxName)) return false;
-    final box = Hive.box(_boxName);
-    final current = (box.get('unlocked') as List?)?.cast<String>() ?? [];
-    return current.contains(id);
+  Future<void> unlock(String key, int reward, String reason) async {
+    final p = await SharedPreferences.getInstance();
+    if (await isUnlocked(key)) return;
+    await p.setBool('$_kDonePrefix$key', true);
+    await PointsService().awardOnce('ach_'+key, reward, reason: reason);
   }
 }
