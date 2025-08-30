@@ -7,11 +7,11 @@ class LeaderboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final rows = const [
-      ('Вы', 1240),
-      ('Иван', 1180),
-      ('Мария', 990),
-      ('Алексей', 870),
-      ('Наталья', 820),
+      _Rank('Вы', 1240),
+      _Rank('Иван', 1180),
+      _Rank('Мария', 990),
+      _Rank('Алексей', 870),
+      _Rank('Наталья', 820),
     ];
 
     return Scaffold(
@@ -31,20 +31,29 @@ class LeaderboardScreen extends StatelessWidget {
                 BoxShadow(
                   color: theme.colorScheme.primary.withValues(alpha: 0.04),
                   blurRadius: 10,
-                  offset: const Offset(0,4),
+                  offset: const Offset(0, 4),
                 )
               ],
             ),
             child: ListTile(
-              leading: CircleAvatar(
-                child: Text('${i+1}'),
+              leading: CircleAvatar(child: Text('${i + 1}')),
+              title: Text(
+                r.name,
+                style: you
+                    ? theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)
+                    : null,
               ),
-              title: Text(r.$1, style: you ? theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700) : null),
-              trailing: Text('${r.$2} баллов', style: theme.textTheme.bodyLarge),
+              trailing: Text('${r.points} баллов', style: theme.textTheme.bodyLarge),
             ),
           );
         },
       ),
     );
   }
+}
+
+class _Rank {
+  final String name;
+  final int points;
+  const _Rank(this.name, this.points);
 }
